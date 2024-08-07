@@ -5,6 +5,7 @@ const stopCaptureButton = document.getElementById("stopCapture");
 
 let socket;
 let mediaStream;
+let captureInterval 
 
 async function startCapture() {
   try {
@@ -13,11 +14,14 @@ async function startCapture() {
       audio: false,
     });
     sharedVideo.srcObject = mediaStream;
+    
+    startCaptureButton.disabled = true;
+    stopCaptureButton.disabled = false;
+    
+    captureInterval = setInterval(captureAndSendImage, 1000);
     // TODO : implement the ws connection later
     // startWebSocket(mediaStream);
 
-    startCaptureButton.disabled = true;
-    stopCaptureButton.disabled = false;
   } catch (err) {
     console.error("Error: " + err);
   }
@@ -33,9 +37,22 @@ function stopCapture() {
   }
 }
 
+function captureAndSendImage() {
+  const canvas = document.createElement('canvas');
+  canvas.width = sharedVideo.videoWidth
+}
+
+
+function startWebsocketInitial() {
+  socket = new WebSocket('ws://localhost:8000/ws')
+  socket.onopen = () => console.log("WS connected.")
+  socket.onclose = () => console.log("WS closed")
+  socket.onerror = (error) => console.error('WebSocket error:', error);
+}
+
 function startWebSocket(stream) {
   // TODO: IMPLEMENT SERVER FOR THIS ENDPOINT.
-  socket = new WebSocket("ws://localhost:3000/ws");
+  socket = new WebSocket("ws://localhost:8000/ws");
 
   socket.onopen = () => {
     console.log("WebSocket connection opened");

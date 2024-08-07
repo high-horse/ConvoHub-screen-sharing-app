@@ -4,18 +4,26 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Window Sharing App</title>
+
+        <style>
+            #videoContainer {
+                width: 500px;
+                height: 300px;
+                border: 2px solid black;
+                overflow: hidden;
+            }
+            #sharedVideo {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+        </style>
     </head>
     <body>
         <h1>Window Sharing App</h1>
         <button id="startCapture">Start Capture</button>
-        <div
-            style="
-                width: 100px !important;
-                height: 100px inportant;
-                border: 2px solid black;
-                overflow: hidden;
-            "
-        >
+        <button id="stopCapture">Stop Capture</button>
+        <div id="videoContainer">
             <video id="sharedVideo" autoplay></video>
         </div>
         <script src="app.js"></script>

@@ -13,6 +13,6 @@ type Event struct {
 }
 
 const (
-	EventTypeImage = "image"
-	EventTypeText = "text"
+	EventTypeImage = "IMAGE"
+	EventTypeText = "TEXT"
 )

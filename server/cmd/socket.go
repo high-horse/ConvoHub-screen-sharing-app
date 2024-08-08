@@ -1,25 +1,28 @@
 package main
 
 import (
-	"encoding/base64"
 	"fmt"
 	"log"
 	"net/http"
-	"os"
-	"path"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
 )
 
-var upgrader = websocket.Upgrader{
-	ReadBufferSize: 	1024,
-	WriteBufferSize:	1024,
-	CheckOrigin: func(r *http.Request) bool {
-        return true
-    },
-}
+var (
+	upgrader = websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
+	}
+
+	clients     = make(map[string]*Client)
+	clientsLock sync.RWMutex
+)
 
 
 func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
@@ -29,37 +32,58 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer conn.Close()
-	
+
+	clientID := fmt.Sprintf("%d", time.Now().UnixNano())
+	client := &Client{
+		ID:   clientID,
+		Conn: conn,
+	}
+
+	// add client to register
+	clientsLock.Lock()
+	clients[clientID] = client
+	clientsLock.Unlock()
+
+	defer func() {
+		// remove client on disconnect
+		clientsLock.Lock()
+		delete(clients, clientID)
+		clientsLock.Unlock()
+	}()
+
 	for {
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
 			return
 		}
-		
-		// Remove the data URL prefix
-		base64data := strings.TrimPrefix(string(msg), "data:image/jpeg;base64,")
-		
-		// Decode base64 to image data
-		imageData, err := base64.StdEncoding.DecodeString(base64data)
-		if err != nil {
-			log.Println("decode error", err)
-			continue
+
+		event := parseEvent(string(msg))
+		handleEvent(client, event)
+	}
+}
+
+func parseEvent(msg string) Event {
+	parts := strings.SplitN(msg, ":", 2)
+	if len(parts) != 2 {
+		return Event{
+			Type:    "unknown",
+			Payload: msg,
 		}
-		capturesDir := "./captures"
-		err = os.MkdirAll(capturesDir, os.ModePerm)
-		if err != nil {
-			log.Fatalf("failed to create directory, %v",err)
-		}
-		
-		filename :=fmt.Sprintf("captured_image_%d.jpg",time.Now().UnixNano())
-		filePath := path.Join(capturesDir, filename)
-		
-		err =os.WriteFile(filePath, imageData, 0644)
-		if err != nil {
-			log.Println("file write error", err)
-			continue
-		}
-		// conn.WriteMessage(websocket.TextMessage, msg)
-		log.Printf("image saved : %s \n", filename)
+	}
+	return Event{
+		Type:    parts[0],
+		Payload: parts[1],
+	}
+}
+
+// handleEvent processes events based on their type
+func handleEvent(client *Client, event Event) {
+	switch event.Type {
+	case EventTypeImage:
+		HandleImageEvent(client, event.Payload)
+	case EventTypeText:
+		handleTextEvent(client, event.Payload)
+	default:
+		log.Printf("Unknown event type: %s", event.Type)
 	}
 }

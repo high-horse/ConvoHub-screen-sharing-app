@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { LabelProps, defaultLabelClass } from '../../types.ts'
+import { LabelProps, defaultLabelClass } from '../../../types.ts'
 
 const props = defineProps<LabelProps>()
 </script>

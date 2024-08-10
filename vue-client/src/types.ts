@@ -5,6 +5,7 @@ export interface InputFieldProps {
   placeholder?: string;
   required?: boolean;
   class?: string;
+  modelValue: string;
 }
 
 export interface LabelProps {

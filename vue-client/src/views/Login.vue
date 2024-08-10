@@ -1,8 +1,11 @@
 <script setup lang="ts">
-// import { ref } from 'vue'
+import { ref } from 'vue'
 import ForminputField from '../components/common/ForminputField.vue'
 
 import { InputFieldProps, LabelProps } from '../types'
+
+const emailValue = ref('');
+const passwordValue = ref('');
 
 const email = {
   label: {
@@ -14,7 +17,8 @@ const email = {
     name: 'email',
     id: 'email',
     placeholder: 'name@mail.com',
-    required: true
+    required: true,
+    modelValue: emailValue,
   } as InputFieldProps
 }
 
@@ -28,8 +32,15 @@ const password = {
     name: 'password',
     id: 'password',
     placeholder: '*********',
-    required: true
+    required: true,
+    modelValue: passwordValue,
   } as InputFieldProps
+}
+
+const submitForm = () => {
+  console.log('email:', email)
+  console.log('email:', emailValue.value);
+   console.log('password:', passwordValue.value);
 }
 </script>
 
@@ -48,8 +59,8 @@ const password = {
           Sign in to your account
         </h1>
         <form class="space-y-4 md:space-y-6" action="#">
-          <ForminputField v-bind="email" />
-          <ForminputField v-bind="password" />
+          <ForminputField v-model="emailValue" v-bind="email" />
+          <ForminputField v-model="passwordValue" v-bind="password" />
 
           <div class="flex items-center justify-between">
             <div class="flex items-start">
@@ -74,6 +85,7 @@ const password = {
           <button
             type="submit"
             class="w-full text-white bg-primary-600 hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
+            @click.prevent="submitForm"
           >
             Sign in
           </button>

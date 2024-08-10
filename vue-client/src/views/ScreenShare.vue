@@ -9,7 +9,7 @@
 
     <button
       class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mx-3"
-      @click="startCapture"
+      @click="startCaptureHandler"
       :disabled="captureInProgress"
     >
       Start Capture
@@ -17,7 +17,7 @@
 
     <button
       class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mx-3"
-      @click="stopCapture"
+      @click="stopCaptureHandler"
       :disabled="!captureInProgress"
     >
       Stop Capture
@@ -27,7 +27,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineComponent, ref, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useWebSocket } from '../composables/useWebSocket'
 
 const { startWebSocket, startCapture, stopCapture, sharedVideo, EventType } = useWebSocket()

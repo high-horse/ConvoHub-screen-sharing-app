@@ -3,6 +3,8 @@ import { ref } from 'vue'
 import ForminputField from '../components/common/ForminputField.vue'
 
 import { InputFieldProps, LabelProps } from '../types'
+import { auth } from '../store/auth';
+import router from '../router';
 
 const emailValue = ref('');
 const passwordValue = ref('');
@@ -40,7 +42,10 @@ const password = {
 const submitForm = () => {
   console.log('email:', email)
   console.log('email:', emailValue.value);
-   console.log('password:', passwordValue.value);
+  console.log('password:', passwordValue.value);
+  
+  auth.login({ email: emailValue.value, password: passwordValue.value });
+  router.push('/home');
 }
 </script>
 

@@ -6,3 +6,9 @@
   margin: 2px;
   padding: 2px;
 }
+
+body,
+html,
+* {
+  color: white;
+}

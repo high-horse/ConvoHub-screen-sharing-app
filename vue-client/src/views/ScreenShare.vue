@@ -1,0 +1,54 @@
+<template>
+  <div>
+    <button
+      class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+      @click="startWebSocket"
+    >
+      Start WebSocket
+    </button>
+
+    <button
+      class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+      @click="startCapture"
+      :disabled="captureInProgress"
+    >
+      Start Capture
+    </button>
+
+    <button
+      class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+      @click="stopCapture"
+      :disabled="!captureInProgress"
+    >
+      Stop Capture
+    </button>
+    <video ref="videoElement" autoplay></video>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { defineComponent, ref, onMounted } from 'vue'
+import { useWebSocket } from '../composables/useWebSocket'
+
+const { startWebSocket, startCapture, stopCapture, sharedVideo, EventType } = useWebSocket()
+const videoElement = ref<HTMLVideoElement | null>(null)
+const captureInProgress = ref(false)
+
+function startCaptureHandler() {
+  if (videoElement.value) {
+    captureInProgress.value = true
+    startCapture(videoElement.value)
+  }
+}
+
+function stopCaptureHandler() {
+  captureInProgress.value = false
+  stopCapture()
+}
+
+onMounted(() => {
+  if (videoElement.value) {
+    sharedVideo.value = videoElement.value
+  }
+})
+</script>

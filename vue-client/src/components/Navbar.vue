@@ -6,7 +6,8 @@ import router from '../router'
 
 const menuItems = ref([
   { name: 'Home', path: '/home' },
-  { name: 'Logout', path: '/', action: logout }
+  { name: 'Logout', path: '/', action: logout },
+  { name: 'Screen Share', path: '/screen-share'}
 ])
 
 function logout() {

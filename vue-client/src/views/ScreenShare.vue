@@ -1,14 +1,14 @@
 <template>
   <div>
     <button
-      class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+      class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mx-3"
       @click="startWebSocket"
     >
       Start WebSocket
     </button>
 
     <button
-      class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+      class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mx-3"
       @click="startCapture"
       :disabled="captureInProgress"
     >
@@ -16,7 +16,7 @@
     </button>
 
     <button
-      class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+      class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mx-3"
       @click="stopCapture"
       :disabled="!captureInProgress"
     >

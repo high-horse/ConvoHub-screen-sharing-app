@@ -3,13 +3,22 @@ import { ref } from "vue";
 const EventType = {
   TEXT: 'TEXT',
   IMAGE: 'IMAGE',
+  UPDATE_CLIENT: 'UPDATE_CLIENT',
+  PING: 'PING',
+  PONG: 'PONG'
 }
+
+interface Event {
+  type: typeof EventType,
+  payload: string,
+};
 
 export function useWebSocket() {
   const socket = ref<WebSocket | null>(null);
   const mediaStream = ref<MediaStream | null>(null);
   const captureInterval = ref<number | null>(null);
   const sharedVideo = ref<HTMLVideoElement | null>(null);
+  const clients = ref<string[]>([]); // To store the list of client IDs
   
   function startWebSocket() {
     if(socket.value) {
@@ -35,6 +44,29 @@ export function useWebSocket() {
     socket.value.onmessage = (event) => {
       const data = event.data;
       console.log("Recieved Message from WS :", data);
+      
+      try {
+        const parsedData = JSON.parse(data);
+        handleEvent(parsedData as Event);
+      } catch (error) {
+        console.error("Error parsing message :", error)
+      }
+    };
+  }
+  function  handleEvent(event: Event) {
+    switch(event.type) {
+      case EventType.UPDATE_CLIENT:
+        clients.value = event.payload.split(",");
+        console.log("Updated client list:", clients.value);
+        break;
+      
+      case EventType.PING:
+        console.log("Recieved PING from server");
+        sendEvent(EventType.PONG, "");
+        break;
+        
+      default:
+        console.log("Unknown event type:", event.type)
     }
   }
   
@@ -104,7 +136,10 @@ export function useWebSocket() {
   
   function sendEvent(type: string, payload: string) {
     if(socket.value) {
-      socket.value.send(`${type}:${payload}`)
+      const message = JSON.stringify({type, payload})
+      // socket.value.send(`${type}:${payload}`)
+      socket.value.send(message)
+      
     }
   }
   
@@ -113,6 +148,7 @@ export function useWebSocket() {
     startCapture,
     stopCapture,
     sharedVideo,
+    clients,
     EventType
   }
 }

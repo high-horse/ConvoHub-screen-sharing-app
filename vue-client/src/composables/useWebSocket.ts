@@ -9,7 +9,7 @@ const EventType = {
 }
 
 interface Event {
-  type: typeof EventType,
+  type: keyof typeof EventType,
   payload: string,
 };
 
@@ -35,6 +35,7 @@ export function useWebSocket() {
     
     socket.value.onclose = () => {
       console.log("Websocket disconnected");
+      socket.value = null; 
     };
     
     socket.value.onerror = (error) => {
@@ -83,7 +84,7 @@ export function useWebSocket() {
       videoElement.srcObject = mediaStream.value;
       sharedVideo.value = videoElement;
 
-      startWebSocket();
+      // startWebSocket();
       captureInterval.value = setInterval(captureAndSendImage, 1000); // Capture every second
     } catch(err) {
       console.error("Error: " + err);

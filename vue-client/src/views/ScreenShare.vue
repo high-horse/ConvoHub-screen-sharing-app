@@ -24,13 +24,15 @@
     </button>
     <video ref="videoElement" autoplay></video>
   </div>
+  <div>{{clients}}</div>
+  
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useWebSocket } from '../composables/useWebSocket'
 
-const { startWebSocket, startCapture, stopCapture, sharedVideo, EventType } = useWebSocket()
+const { startWebSocket, startCapture, stopCapture, sharedVideo, clients, EventType } = useWebSocket()
 const videoElement = ref<HTMLVideoElement | null>(null)
 const captureInProgress = ref(false)
 

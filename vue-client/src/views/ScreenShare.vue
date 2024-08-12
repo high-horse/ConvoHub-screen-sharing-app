@@ -27,6 +27,11 @@
     </div>
 
     <ClientsList :clientsList="clients" :myWsID="myWsId" />
+    <div>
+    static myweid
+
+    {{myWsId?.value}}
+    </div>
 </template>
 
 <script setup lang="ts">

@@ -49,11 +49,8 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("New client connected: %s", client.ID)
 
-	go client.readPump()
 	go client.writePump()
-
-
-	broadcast <- Event{Type: EventTypeUpdateClient, Payload: getClientIDs()}
+	go client.readPump()
 
 	select {}
 }
@@ -61,7 +58,7 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 func (c *Client) readPump() {
 	defer func() {
 		c.Conn.Close()
-		log.Printf("Client %s disconnected", c.ID)
+		log.Printf("READClient %s disconnected", c.ID)
 		clientsLock.Lock()
 		delete(clients, c.ID)
 		clientsLock.Unlock()
@@ -95,6 +92,10 @@ func (c *Client) readPump() {
 		log.Printf("Parsed event from client %s: Type: %s, Payload length: %d", c.ID, event.Type, len(event.Payload))
 		handleEvent(c, event)
 		// Handle the message...
+		// // Stop listening once the client is ready
+        if event.Type == EventTypeReady {
+            broadcast <- Event{Type: EventTypeUpdateClient, Payload: getClientIDs()}
+        }
 	}
 }
 
@@ -103,6 +104,7 @@ func (c *Client) writePump() {
 	defer func() {
 		ticker.Stop()
 		c.Conn.Close()
+		log.Printf("WRITEClient %s disconnected", c.ID)
 	}()
 
 	for {
@@ -128,17 +130,17 @@ func (c *Client) writePump() {
 			log.Printf("Sent message to client %s: %+v", c.ID, event)
 
 		case <-ticker.C:
-		   	clientsLock.RLock()
-		    _, exists := clients[c.ID]
-		    clientsLock.RUnlock()
-		    if exists {
-		        c.Conn.SetWriteDeadline(time.Now().Add(10 * time.Second)) // Update deadline dynamically
-		        if err := c.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
-		            log.Printf("Error sending ping to client %s: %v", c.ID, err)
-		            c.removeClient()
-		            return
-		        }
-		    }
+			clientsLock.RLock()
+			_, exists := clients[c.ID]
+			clientsLock.RUnlock()
+			if exists {
+				c.Conn.SetWriteDeadline(time.Now().Add(10 * time.Second)) // Update deadline dynamically
+				if err := c.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+					log.Printf("Error sending ping to client %s: %v", c.ID, err)
+					c.removeClient()
+					return
+				}
+			}
 		}
 	}
 }
@@ -158,12 +160,13 @@ func handleEvent(client *Client, event Event) {
 	log.Printf("Handling event from client %s: Type: %s\n", client.ID, event.Type)
 	switch event.Type {
 	case EventTypeReady:
-		newClient := Event {
-			Type: EventNewConnection,
+		newClient := Event{
+			Type:    EventNewConnection,
 			Payload: client.ID,
 		}
 		client.Send <- newClient
-		
+		// broadcast <- Event{Type: EventTypeUpdateClient, Payload: getClientIDs()}
+
 	case EventTypeImage:
 		HandleImageEvent(client, event.Payload)
 	case EventTypeText:
@@ -196,7 +199,12 @@ func broadcastHandler() {
 			case client.Send <- event:
 				log.Printf("Sent broadcast to client %s", client.ID)
 
-			default:
+			// default:
+			// 	log.Printf("Failed to send broadcast to client %s, removing client", client.ID)
+			// 	close(client.Send)
+			// 	delete(clients, client.ID)
+			
+			case <-time.After(time.Second * 5): // Timeout to prevent blocking indefinitely
 				log.Printf("Failed to send broadcast to client %s, removing client", client.ID)
 				close(client.Send)
 				delete(clients, client.ID)

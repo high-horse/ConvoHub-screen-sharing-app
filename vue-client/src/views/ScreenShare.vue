@@ -28,9 +28,7 @@
 
     <ClientsList :clientsList="clients" :myWsID="myWsId" />
     <div>
-    static myweid
 
-    {{myWsId?.value}}
     </div>
 </template>
 

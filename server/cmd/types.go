@@ -22,6 +22,7 @@ const (
 	EventTypeText = "TEXT"
 	EventTypeUpdateClient = "UPDATE_CLIENT"
 	EventNewConnection = "NEW_CONNECTION"
+	EventTypeReady = "CLIENT_READY"
 )
 
 var readDeadlineLimit = time.Now().Add(60 * time.Second)

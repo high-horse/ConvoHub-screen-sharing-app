@@ -26,10 +26,10 @@ func HandleImageEvent(client *Client, payload string) {
 		log.Printf("failed to create directory: %v", err)
 	}
 
-	filename :=fmt.Sprintf("captured_image_%d.jpg",time.Now().UnixNano())
+	filename := fmt.Sprintf("captured_image_%d.jpg", time.Now().UnixNano())
 	filePath := path.Join(capturesDir, filename)
 
-	err =os.WriteFile(filePath, imageData, 0644)
+	err = os.WriteFile(filePath, imageData, 0644)
 	if err != nil {
 		log.Println("file write error", err)
 		return

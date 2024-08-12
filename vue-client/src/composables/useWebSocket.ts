@@ -8,6 +8,7 @@ const EventType = {
   PONG: 'PONG',
   NEW_CONNECTION: 'NEW_CONNECTION',
   NEW_CONNECTION_TEXT: 'NEW_CONNECTION_TEXT',
+  CLIENT_READY: 'CLIENT_READY',
 }
 
 interface Event {
@@ -35,7 +36,7 @@ export function useWebSocket() {
       console.log("Websocket connected.");
       // sendEvent(EventType.TEXT, "Websocket connectio established");
        setTimeout(() => {
-         sendEvent(EventType.TEXT, "Websocket connection established");
+         sendEvent(EventType.CLIENT_READY, "Websocket connection established");
        }, 1000); 
     };
     
@@ -61,6 +62,7 @@ export function useWebSocket() {
     };
   }
   function  handleEvent(event: Event) {
+    console.log("handleevent:", event)
     switch(event.type) {
       case EventType.UPDATE_CLIENT:
         clients.value = event.payload.split(",");

@@ -52,13 +52,6 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	go client.readPump()
 	go client.writePump()
 
-	newClient := Event{
-		Type:    EventNewConnection,
-		Payload: client.ID,
-	}
-	// send this newClient to the this connected new client
-	client.Send <- newClient
-	// log.Printf("Sent newClient event to client %s: %+v", client.ID, newClient)
 
 	broadcast <- Event{Type: EventTypeUpdateClient, Payload: getClientIDs()}
 
@@ -164,6 +157,13 @@ func (c *Client) removeClient() {
 func handleEvent(client *Client, event Event) {
 	log.Printf("Handling event from client %s: Type: %s\n", client.ID, event.Type)
 	switch event.Type {
+	case EventTypeReady:
+		newClient := Event {
+			Type: EventNewConnection,
+			Payload: client.ID,
+		}
+		client.Send <- newClient
+		
 	case EventTypeImage:
 		HandleImageEvent(client, event.Payload)
 	case EventTypeText:

@@ -9,12 +9,17 @@
             </li>
         </ul>
     </div>
+    <div>
+    MY WSID <br />
+    {{myWsID}}
+    </div>
 </template>
 
 <script setup lang="ts">
 
 const props = defineProps<{
-  clientsList : string[]
+  clientsList : string[],
+  myWsID : string,
 }>()
 
 console

@@ -21,16 +21,12 @@
             :disabled="!captureInProgress"
         >
             Stop Capture
-        </button>
-        <div>
-            MY WSID <br />
-            {{ myWsId?.value }}
-        </div>
+        </button>  
 
         <video ref="videoElement" autoplay></video>
     </div>
 
-    <ClientsList :clientsList="clients" />
+    <ClientsList :clientsList="clients" :myWsID="myWsId" />
 </template>
 
 <script setup lang="ts">

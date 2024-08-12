@@ -5,7 +5,9 @@ const EventType = {
   IMAGE: 'IMAGE',
   UPDATE_CLIENT: 'UPDATE_CLIENT',
   PING: 'PING',
-  PONG: 'PONG'
+  PONG: 'PONG',
+  NEW_CONNECTION: 'NEW_CONNECTION',
+  NEW_CONNECTION_TEXT: 'NEW_CONNECTION_TEXT',
 }
 
 interface Event {
@@ -19,6 +21,7 @@ export function useWebSocket() {
   const captureInterval = ref<number | null>(null);
   const sharedVideo = ref<HTMLVideoElement | null>(null);
   const clients = ref<string[]>([]); // To store the list of client IDs
+  const myWsId = ref<string | null>(null);
   
   function startWebSocket() {
     if(socket.value) {
@@ -30,7 +33,10 @@ export function useWebSocket() {
     
     socket.value.onopen = () => {
       console.log("Websocket connected.");
-      sendEvent(EventType.TEXT, "Websocket connectio established");
+      // sendEvent(EventType.TEXT, "Websocket connectio established");
+       setTimeout(() => {
+         sendEvent(EventType.TEXT, "Websocket connection established");
+       }, 1000); 
     };
     
     socket.value.onclose = () => {
@@ -59,6 +65,10 @@ export function useWebSocket() {
       case EventType.UPDATE_CLIENT:
         clients.value = event.payload.split(",");
         console.log("Updated client list:", clients.value);
+        break;
+        
+      case EventType.NEW_CONNECTION:
+        myWsId.value = event.payload;
         break;
       
       case EventType.PING:
@@ -150,6 +160,7 @@ export function useWebSocket() {
     stopCapture,
     sharedVideo,
     clients,
+    myWsId,
     EventType
   }
 }

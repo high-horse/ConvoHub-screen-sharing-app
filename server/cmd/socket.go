@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -15,8 +14,8 @@ import (
 
 var (
 	upgrader = websocket.Upgrader{
-		ReadBufferSize:  1024,
-		WriteBufferSize: 1024,
+		ReadBufferSize:  10 * 1024 * 1024,
+		WriteBufferSize: 10 * 1024 * 1024,
 		CheckOrigin: func(r *http.Request) bool {
 			return true
 		},
@@ -24,118 +23,146 @@ var (
 
 	clients     = make(map[string]*Client)
 	clientsLock sync.RWMutex
-	updateChan  = make(chan struct{}, 1)
+	broadcast   = make(chan Event)
 )
-
 
 func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		http.NotFound(w, r)
+		log.Printf("Error upgrading connection: %v", err)
+		http.Error(w, "Could not open websocket connection", http.StatusBadRequest)
+		// http.NotFound(w, r)
 		return
 	}
 	defer conn.Close()
 
-	clientID := fmt.Sprintf("%d", time.Now().UnixNano())
 	client := &Client{
-		ID:   clientID,
+		ID:   fmt.Sprintf("%d", time.Now().UnixNano()),
 		Conn: conn,
-		done: make(chan struct{}),
+		Send: make(chan Event),
 	}
 
 	// add client to register
 	clientsLock.Lock()
-	clients[clientID] = client
+	clients[client.ID] = client
 	clientsLock.Unlock()
-	
-	// Notify all clients about the new connection
-	updateChan <- struct{}{}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	
-	go func() {
-        <-client.done
-        cancel()
-    }()
+	log.Printf("New client connected: %s", client.ID)
+
+	go client.readPump()
+	go client.writePump()
+
+	newClient := Event{
+		Type:    EventNewConnection,
+		Payload: client.ID,
+	}
+	// send this newClient to the this connected new client
+	client.Send <- newClient
+	// log.Printf("Sent newClient event to client %s: %+v", client.ID, newClient)
+
+	broadcast <- Event{Type: EventTypeUpdateClient, Payload: getClientIDs()}
+
+	select {}
+}
+
+func (c *Client) readPump() {
 	defer func() {
-	 	cancel()
-        conn.Close()
-		// remove client on disconnect
+		c.Conn.Close()
+		log.Printf("Client %s disconnected", c.ID)
 		clientsLock.Lock()
-		delete(clients, clientID)
+		delete(clients, c.ID)
 		clientsLock.Unlock()
-		
-		// Notify all clients about the disconnection
-		updateChan <- struct{}{}
-		
-		log.Printf("Client %s disconnected", clientID)
+		broadcast <- Event{Type: EventTypeUpdateClient, Payload: getClientIDs()}
 	}()
-	
- 	go readPump(ctx, client)
-    go writePump(ctx, client)
 
-    <-ctx.Done()	
+	c.Conn.SetReadLimit(int64(readLimit))
+	c.Conn.SetReadDeadline(time.Now().Add(60 * time.Second)) // Update deadline dynamically
+	c.Conn.SetPongHandler(func(string) error {
+		c.Conn.SetReadDeadline(time.Now().Add(60 * time.Second)) // Reset deadline on pong
+		return nil
+	})
+
+	for {
+		_, message, err := c.Conn.ReadMessage()
+		if err != nil {
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				log.Printf("Unexpected close error: %v", err)
+			}
+			break
+		}
+
+		// log.Printf("Received message from client %s: %s", c.ID, string(message))
+
+		var event Event
+		if err := json.Unmarshal(message, &event); err != nil {
+			log.Printf("Error unmarshaling message: %v", err)
+			log.Printf("error : %v", err)
+			continue
+		}
+		log.Printf("Parsed event from client %s: Type: %s, Payload length: %d", c.ID, event.Type, len(event.Payload))
+		handleEvent(c, event)
+		// Handle the message...
+	}
 }
 
-func readPump(ctx context.Context, client *Client) {
-	defer close(client.done)
-	
-    for {
-        select {
-        case <-ctx.Done():
-            return
-        default:
-            _, msg, err := client.Conn.ReadMessage()
-            if err != nil {
-                log.Printf("Error reading message from client %s: %v", client.ID, err)
-                return
-            }
-            var event Event
-            if err := json.Unmarshal(msg, &event); err != nil {
-                log.Printf("Error unmarshaling message from client %s: %v", client.ID, err)
-                continue
-            }
-            handleEvent(client, event)
-        }
-    }
-}
+func (c *Client) writePump() {
+	ticker := time.NewTicker(54 * time.Second)
+	defer func() {
+		ticker.Stop()
+		c.Conn.Close()
+	}()
 
+	for {
+		select {
+		case event, ok := <-c.Send:
+			c.Conn.SetWriteDeadline(time.Now().Add(10 * time.Second)) // Update deadline dynamically
+			if !ok {
+				c.Conn.WriteMessage(websocket.CloseMessage, []byte{})
+				return
+			}
 
-func writePump(ctx context.Context, client *Client) {
-    ticker := time.NewTicker(30 * time.Second)
-    defer ticker.Stop()
-	// defer close(client.done)
-    
-    for {
-        select {
-        case <-ctx.Done():
-            return
-        case <-ticker.C:
-            if err := client.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
-                log.Printf("Error sending ping to client %s: %v", client.ID, err)
-                return
-            }
-        }
-    }
-}
+			w, err := c.Conn.NextWriter(websocket.TextMessage)
+			if err != nil {
+				return
+			}
+			json.NewEncoder(w).Encode(event)
 
+			if err := w.Close(); err != nil {
+				log.Printf("Error closing writer: %v", err)
+				return
+			}
 
-func parseEvent(msg string) Event {
-	parts := strings.SplitN(msg, ":", 2)
-	if len(parts) != 2 {
-		return Event{
-			Type:    "unknown",
-			Payload: msg,
+			log.Printf("Sent message to client %s: %+v", c.ID, event)
+
+		case <-ticker.C:
+		   	clientsLock.RLock()
+		    _, exists := clients[c.ID]
+		    clientsLock.RUnlock()
+		    if exists {
+		        c.Conn.SetWriteDeadline(time.Now().Add(10 * time.Second)) // Update deadline dynamically
+		        if err := c.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+		            log.Printf("Error sending ping to client %s: %v", c.ID, err)
+		            c.removeClient()
+		            return
+		        }
+		    }
 		}
 	}
-	return Event{
-		Type:    parts[0],
-		Payload: parts[1],
-	}
+}
+
+// removeClient safely removes a client from the clients map
+func (c *Client) removeClient() {
+	clientsLock.Lock()
+	defer clientsLock.Unlock()
+	delete(clients, c.ID)
+	close(c.Send)
+	log.Printf("Client %s removed", c.ID)
+	broadcast <- Event{Type: EventTypeUpdateClient, Payload: getClientIDs()}
 }
 
 // handleEvent processes events based on their type
 func handleEvent(client *Client, event Event) {
+	log.Printf("Handling event from client %s: Type: %s\n", client.ID, event.Type)
 	switch event.Type {
 	case EventTypeImage:
 		HandleImageEvent(client, event.Payload)
@@ -146,47 +173,35 @@ func handleEvent(client *Client, event Event) {
 	}
 }
 
-func broadcastClientUpdate() {
+func getClientIDs() string {
 	clientsLock.RLock()
 	defer clientsLock.RUnlock()
-	
-	var clientIDs []string
+
+	var ids []string
 	for id := range clients {
-		clientIDs = append(clientIDs, id)
+		ids = append(ids, id)
 	}
-	
-	log.Printf("Broadcasting client update. Current clients: %v", clientIDs)
-	
-	updateEvent := Event {
-		Type: EventTypeUpdateClient,
-		Payload: strings.Join(clientIDs, ","),
-	}
-	
-	for _, client := range clients {
-		err := sendMessage(client.Conn, updateEvent)
-		if err != nil {
-			log.Printf("Error sending update to client %s: %v", client.ID, err)
+	clientList := strings.Join(ids, ",")
+	log.Printf("Current clients: %s", clientList)
+	return clientList
+}
+
+func broadcastHandler() {
+	for {
+		event := <-broadcast
+		log.Printf("Broadcasting event: %+v", event)
+		clientsLock.RLock()
+		for _, client := range clients {
+			select {
+			case client.Send <- event:
+				log.Printf("Sent broadcast to client %s", client.ID)
+
+			default:
+				log.Printf("Failed to send broadcast to client %s, removing client", client.ID)
+				close(client.Send)
+				delete(clients, client.ID)
+			}
 		}
+		clientsLock.RUnlock()
 	}
-}
-
-func sendMessage(conn *websocket.Conn, event Event)error {
-	data, err := json.Marshal(event)
-	if err != nil {
-		return err
-	}
-	return conn.WriteMessage(websocket.TextMessage, data)
-}
-
-func startUpdateListener(ctx context.Context) {
-    go func() {
-        for {
-            select {
-            case <-ctx.Done():
-                return
-            case <-updateChan:
-                broadcastClientUpdate()
-            }
-        }
-    }()
 }

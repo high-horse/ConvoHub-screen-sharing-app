@@ -23,7 +23,7 @@ func HandleImageEvent(client *Client, payload string) {
 	capturesDir := "./captures"
 	err = os.MkdirAll(capturesDir, os.ModePerm)
 	if err != nil {
-		log.Fatalf("failed to create directory, %v",err)
+		log.Printf("failed to create directory: %v", err)
 	}
 
 	filename :=fmt.Sprintf("captured_image_%d.jpg",time.Now().UnixNano())

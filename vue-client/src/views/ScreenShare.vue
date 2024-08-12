@@ -21,15 +21,17 @@
             :disabled="!captureInProgress"
         >
             Stop Capture
-        </button>  
+        </button>
 
         <video ref="videoElement" autoplay></video>
     </div>
 
-    <ClientsList :clientsList="clients" :myWsID="myWsId" />
-    <div>
-
-    </div>
+    <ClientsList
+        :clientsList="clients"
+        :myWsID="myWsId"
+        @connectPeer="handleConnectPeer"
+    />
+    <div></div>
 </template>
 
 <script setup lang="ts">
@@ -45,7 +47,7 @@ const {
     sharedVideo,
     clients,
     myWsId,
-    EventType,
+    sendPeerRequest,
 } = useWebSocket();
 const videoElement = ref<HTMLVideoElement | null>(null);
 const captureInProgress = ref(false);
@@ -68,4 +70,9 @@ onMounted(() => {
         sharedVideo.value = videoElement.value;
     }
 });
+
+function handleConnectPeer(peerId: string): void {
+    console.log("connect to peer: ", peerId);
+    sendPeerRequest(peerId);
+}
 </script>

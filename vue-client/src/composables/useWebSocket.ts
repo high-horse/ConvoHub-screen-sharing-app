@@ -1,20 +1,5 @@
 import { ref } from "vue";
-
-const EventType = {
-  TEXT: 'TEXT',
-  IMAGE: 'IMAGE',
-  UPDATE_CLIENT: 'UPDATE_CLIENT',
-  PING: 'PING',
-  PONG: 'PONG',
-  NEW_CONNECTION: 'NEW_CONNECTION',
-  NEW_CONNECTION_TEXT: 'NEW_CONNECTION_TEXT',
-  CLIENT_READY: 'CLIENT_READY',
-}
-
-interface Event {
-  type: keyof typeof EventType,
-  payload: string,
-};
+import { EventType, Event } from '../types.ts';
 
 export function useWebSocket() {
   const socket = ref<WebSocket | null>(null);
@@ -156,6 +141,12 @@ export function useWebSocket() {
     }
   }
   
+  function sendPeerRequest(peerId: string) {
+    if(socket.value) {
+      sendEvent(EventType.PEER_REQUEST_SEND, peerId)
+    }
+  }
+  
   return {
     startWebSocket,
     startCapture,
@@ -163,6 +154,6 @@ export function useWebSocket() {
     sharedVideo,
     clients,
     myWsId,
-    EventType
+    sendPeerRequest,
   }
 }

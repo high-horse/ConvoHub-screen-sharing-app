@@ -3,7 +3,10 @@
     <div>
         <ul>
             <li v-for="client in clientsList" :key="client">
-                <button v-if="client != myWsID"  class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                <button 
+                v-if="client != myWsID"  
+                @click="$emit('connectPeer', client)"
+                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                    {{ client }}
                 </button>
             </li>
@@ -21,8 +24,10 @@ const props = defineProps<{
   clientsList : string[],
   myWsID : string,
 }>()
+const emit = defineEmits<{
+  (emit: 'connectPeer', peerId:string ):void
+}>()
 
-console
 </script>
 
 <style>

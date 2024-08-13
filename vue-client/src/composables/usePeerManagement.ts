@@ -1,14 +1,12 @@
 import { ref } from "vue";
-import { useWebSocket } from "./useWebSocket.ts";
-import { PairRequest, Event, EventType } from '../types.ts';
+import { PairRequest, Event, EventType, PeerManagementService, WebSocketService } from '../types.ts';
 
-export function usePeerManagement() {
+export function createPeerManagementService(webSocketService: WebSocketService): PeerManagementService {
   const clients = ref<string[]>([]);
   const myWsId = ref<string | null>(null);
   const peerRequest = ref<PairRequest | null>(null);
   const myPair = ref<string | null>(null);
   
-  const { sendEvent } = useWebSocket();
   
   function handlePeerRequestEvent(event: Event) {
     const temp: PairRequest = JSON.parse(event.payload);
@@ -25,6 +23,7 @@ export function usePeerManagement() {
         console.log("unexpeccted response :", resp)
       }
     } else {
+      console.log("Unrecognized EVENT:", event);
       console.log("Unrecognized PEER_REQUEST_SEND:", temp.message);
     }
   }
@@ -34,7 +33,7 @@ export function usePeerManagement() {
       peerId: peerId,
       message: "REQUEST",
     };
-    sendEvent(EventType.PEER_REQUEST_SEND, JSON.stringify(payload));
+    webSocketService.sendEvent(EventType.PEER_REQUEST_SEND, JSON.stringify(payload));
   }
   
   function respondPeerRequest(status: boolean, peerId: string) {
@@ -44,7 +43,7 @@ export function usePeerManagement() {
     };
     peerRequest.value = null;
     myPair.value = peerId;
-    sendEvent(EventType.PEER_REQUEST_RESPONSE, JSON.stringify(payload));
+    webSocketService.sendEvent(EventType.PEER_REQUEST_RESPONSE, JSON.stringify(payload));
   }
   
   return {

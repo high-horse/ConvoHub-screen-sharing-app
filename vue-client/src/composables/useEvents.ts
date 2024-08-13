@@ -1,25 +1,24 @@
-import { Event, EventType } from "../types";
-
-import { usePeerManagement } from "./usePeerManagement";
-import { useWebSocket } from "./useWebSocket";
+import { Event, EventType, EventService, PeerManagementService, WebSocketService } from "../types";
 
 
-export function useEvents() {
-  const { clients, myWsId } = usePeerManagement();
-  const { sendEvent } = useWebSocket();
-  
+
+export function createEventService(
+  peerManagementService: PeerManagementService,
+  webSocketService: WebSocketService
+): EventService {
+ 
   function handleUpdateClientEvent(event: Event) {
-    clients.value = event.payload.split(",");
-    console.log("Updated client list:", clients.value);
+    peerManagementService.clients.value = event.payload.split(",");
+    console.log("Updated client list:", peerManagementService.clients.value);
   }
   
   function handlePingEvent(event: Event) {
     console.log("Recieved PING from server");
-    sendEvent(EventType.PONG, "");
+    webSocketService.sendEvent(EventType.PONG, "");
   }
   
   function handleNewConnectionEvent(event: Event) {
-     myWsId.value = event.payload;
+    peerManagementService.myWsId.value = event.payload;
   }
   
   return{

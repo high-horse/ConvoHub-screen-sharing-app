@@ -1,19 +1,13 @@
 import { ref } from "vue";
-import { Event, EventType, PairRequest } from '../types.ts'
-import { usePeerManagement } from "./usePeerManagement.ts";
-import { useEvents } from "./useEvents.ts";
+import { Event, EventType, WebSocketService, PeerManagementService, EventService } from '../types.ts'
 
-export function useWebSocket() {
+export function createWebSocketService(
+  peerManagementService: PeerManagementService,
+  eventService: EventService
+): WebSocketService {
   const socket = ref<WebSocket | null>(null);
   const URL: string = "ws://127.0.0.1:8000/ws";
-  
-  const { handlePeerRequestEvent } = usePeerManagement();
-  
-  const {
-    handlePingEvent,
-    handleUpdateClientEvent,
-    handleNewConnectionEvent
-  } = useEvents();
+
   
   function startWebSocket() {
     if (socket.value) return;
@@ -58,23 +52,20 @@ export function useWebSocket() {
     console.log("handleevent:", event);
     switch (event.type) {
       case EventType.UPDATE_CLIENT:
-        handleUpdateClientEvent(event);
+        eventService.handleUpdateClientEvent(event);
         break;
 
       case EventType.NEW_CONNECTION:
-        handleNewConnectionEvent(event);
+        eventService.handleNewConnectionEvent(event);
         break;
 
       case EventType.PING:
-        handlePingEvent(event);
+        eventService.handlePingEvent(event);
         break;
 
-      case EventType.PEER_REQUEST_SEND:  // peerRequest.value
-        handlePeerRequestEvent(event);
-        break;
-
+      case EventType.PEER_REQUEST_SEND:  
       case EventType.PEER_REQUEST_RESPONSE: 
-        handlePeerRequestEvent(event);
+        peerManagementService.handlePeerRequestEvent(event);
         break;
       
       default:

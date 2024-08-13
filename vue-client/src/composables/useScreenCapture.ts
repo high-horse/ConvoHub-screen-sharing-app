@@ -1,14 +1,12 @@
-import { ref } from "vue";
-import { useWebSocket } from "./useWebSocket";
-import { EventType } from "../types";
+import { ref, Ref } from "vue";
+import { EventType, ScreenCaptureService, WebSocketService } from "../types";
 
 
-export function useScreenCapture() {
+export function createScreenCaptureService(webSocketService: WebSocketService): ScreenCaptureService {
   const mediaStream = ref<MediaStream | null>(null);
   const captureInterval = ref<number | null>(null);
   const sharedVideo = ref<HTMLVideoElement | null>(null);
   
-  const { sendEvent } = useWebSocket();
   
   async function startCapture(videoElement: HTMLVideoElement) {
     try{
@@ -48,7 +46,7 @@ export function useScreenCapture() {
         if (blob) {
           const reader = new FileReader();
           reader.onloadend = () => {
-            sendEvent(EventType.IMAGE, reader.result as string);
+            webSocketService.sendEvent(EventType.IMAGE, reader.result as string);
           };
           reader.readAsDataURL(blob);
         }

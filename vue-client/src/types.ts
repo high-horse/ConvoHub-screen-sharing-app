@@ -1,3 +1,5 @@
+import { Ref } from "vue";
+
 export enum EventType  {
   TEXT = "TEXT",
   IMAGE = "IMAGE",
@@ -49,3 +51,31 @@ export interface PayloadMessage {
   Status: boolean | string,
 }
 
+
+//  Interface to avoid deoendency recursion.
+export interface WebSocketService {
+  startWebSocket: () => void;
+  sendEvent: (type: string, payload: string) => void;
+}
+
+export interface PeerManagementService {
+  clients: Ref<string[]>;
+  myWsId: Ref<string | null>;
+  peerRequest: Ref<PairRequest | null>;
+  myPair: Ref<string | null>;
+  sendPeerRequest: (peerId: string) => void;
+  respondPeerRequest: (status: boolean, peerId: string) => void;
+  handlePeerRequestEvent: (event: Event) => void;
+}
+
+export interface EventService {
+  handleUpdateClientEvent: (event: Event) => void;
+  handlePingEvent: (event: Event) => void;
+  handleNewConnectionEvent: (event: Event) => void;
+}
+
+export interface ScreenCaptureService {
+  startCapture: (videoElement: HTMLVideoElement) => Promise<void>;
+  stopCapture: () => void;
+  sharedVideo: Ref<HTMLVideoElement | null>;
+}

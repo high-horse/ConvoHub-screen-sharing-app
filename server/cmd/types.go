@@ -22,6 +22,7 @@ const (
 	EventNewConnection = "NEW_CONNECTION"
 	EventTypeReady = "CLIENT_READY"
 	EventPeerRequest = "PEER_REQUEST_SEND"
+	EventPeerRequestResponse = "PEER_REQUEST_RESPONSE"
 )
 
 // var readDeadlineLimit = time.Now().Add(60 * time.Second)

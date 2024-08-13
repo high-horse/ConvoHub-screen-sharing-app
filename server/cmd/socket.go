@@ -173,6 +173,9 @@ func handleEvent(client *Client, event Event) {
 		handleTextEvent(client, event.Payload)
 	case EventPeerRequest:
 		HandlePeerRequestEvent(client, event.Payload)
+	case EventPeerRequestResponse: 
+		HandlePeerRequestResponseEvent(client, event.Payload)
+		
 	default:
 		log.Printf("Unknown event type: %s \t\t %s\n", event.Type, event.Payload)
 	}

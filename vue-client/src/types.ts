@@ -8,6 +8,7 @@ export enum EventType  {
   NEW_CONNECTION_TEXT = "NEW_CONNECTION_TEXT",
   CLIENT_READY = "CLIENT_READY",
   PEER_REQUEST_SEND = 'PEER_REQUEST_SEND',
+  PEER_REQUEST_RESPONSE = 'PEER_REQUEST_RESPONSE',
 };
 
 export interface Event {
@@ -39,5 +40,12 @@ export const defaultLabelClass =
 
 export interface PairRequest {
 	peerID: string,
-	message: string,
+	// message: string,
+	message: PayloadMessage,
 };
+
+export interface PayloadMessage {
+  Type: string,
+  Status: boolean | string,
+}
+

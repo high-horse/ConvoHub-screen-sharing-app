@@ -54,6 +54,7 @@ const {
     myWsId,
     sendPeerRequest,
     peerRequest,
+    respondePeerRequest,
 } = useWebSocket();
 const videoElement = ref<HTMLVideoElement | null>(null);
 const captureInProgress = ref(false);
@@ -83,11 +84,8 @@ function handleConnectPeer(peerId: string): void {
 }
 
 function connectPeerHandler(status: boolean): void {
+    const peerId = peerRequest.value.peerId;
+    respondePeerRequest(status, peerId);
     peerRequest.value = null;
-    if (status) {
-        // send approve request
-    } else {
-        // send deny request
-    }
 }
 </script>

@@ -46,7 +46,7 @@ func handleTextEvent(client *Client, payload string) {
 
 
 
-func HandlePeerRequestEvent(Client *Client, payload string) {
+func HandlePeerRequestEvent(client *Client, payload string) {
 	pairReq := PairRequest{}
 	
 	err := json.Unmarshal([]byte(payload), &pairReq)
@@ -55,7 +55,7 @@ func HandlePeerRequestEvent(Client *Client, payload string) {
 		return
 	}
 	newPayload, err := json.Marshal(PairRequest{
-		PeerID: Client.ID,
+		PeerID: client.ID,
 		Message: pairReq.Message,
 	})
 	if err != nil {
@@ -71,4 +71,40 @@ func HandlePeerRequestEvent(Client *Client, payload string) {
 	} else {
 		fmt.Println("Client with ID %s not found.", pairReq.PeerID)
 	}
+}
+
+
+func HandlePeerRequestResponseEvent(client *Client, payload string) {
+	pairRes := PairRequest{}
+	
+println("")
+println("")
+
+fmt.Println(payload)
+	
+	err := json.Unmarshal([]byte(payload), &pairRes)
+	if err != nil {
+		log.Println("error decoding json:", err)
+		return
+	}
+	
+	newPayload, err := json.Marshal(PairRequest{
+		PeerID: client.ID,
+		Message: pairRes.Message,
+	})
+	if err != nil {
+		log.Println("error marshalling payload:", err)
+		return
+	}
+	
+	event := Event{
+		Type: EventPeerRequestResponse,
+		Payload: string(newPayload),
+	}
+	if client, exists := clients[pairRes.PeerID]; exists {
+		client.Send <- event
+	} else {
+		fmt.Println("Client with ID %s not found.", pairRes.PeerID)
+	}
+	
 }

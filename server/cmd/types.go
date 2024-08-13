@@ -1,8 +1,6 @@
 package main
 
 import (
-	"time"
-
 	"github.com/gorilla/websocket"
 )
 
@@ -23,8 +21,14 @@ const (
 	EventTypeUpdateClient = "UPDATE_CLIENT"
 	EventNewConnection = "NEW_CONNECTION"
 	EventTypeReady = "CLIENT_READY"
+	EventPeerRequest = "PEER_REQUEST_SEND"
 )
 
-var readDeadlineLimit = time.Now().Add(60 * time.Second)
-var writeDeadlineLimit = time.Now().Add(10 * time.Second)
+// var readDeadlineLimit = time.Now().Add(60 * time.Second)
+// var writeDeadlineLimit = time.Now().Add(10 * time.Second)
 var readLimit = 10 * 1024 * 1024
+
+type PairRequest struct {
+	PeerID string `json:"peerId"`
+	Message string 	`json:"message"`
+}

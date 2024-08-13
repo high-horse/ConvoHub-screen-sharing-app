@@ -17,6 +17,11 @@
     MY WSID <br />
     {{myWsID}}
     </div>
+    <div>
+    MY peerRequest <br />
+    {{peerRequest}}
+    </div>
+    
 </template>
 
 <script setup lang="ts">
@@ -24,7 +29,9 @@
 const props = defineProps<{
   clientsList : string[],
   myWsID : string,
+  peerRequest : PairRequest,
 }>()
+
 const emit = defineEmits<{
   (emit: 'connectPeer', peerId:string ):void
 }>()

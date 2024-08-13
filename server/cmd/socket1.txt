@@ -133,8 +133,8 @@ func (c *Client) readPump() {
 		broadcast <- Event{Type: EventTypeUpdateClient, Payload: getClientsIDs()}
 	}()
 	c.Conn.SetReadLimit(512)
-	c.Conn.SetReadDeadline(readDeadlineLimit)
-	c.Conn.SetPongHandler(func(string) error {c.Conn.SetReadDeadline(readDeadlineLimit); return nil;})
+	c.Conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+	c.Conn.SetPongHandler(func(string) error {c.Conn.SetReadDeadline(time.Now().Add(60 * time.Second)); return nil;})
 
 	for {
 		_, message, err := c.Conn.ReadMessage()
@@ -163,7 +163,7 @@ func (c *Client) writePump() {
 	for {
 		select{
 			case event, ok := <- c.Send:
-				c.Conn.SetWriteDeadline(writeDeadlineLimit)
+				c.Conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 				if !ok {
 					c.Conn.WriteMessage(websocket.CloseMessage, []byte{})
 					return
@@ -180,7 +180,7 @@ func (c *Client) writePump() {
 				}
 				
 			case <-ticker.C:
-				c.Conn.SetWriteDeadline(writeDeadlineLimit)
+				c.Conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 				if err := c.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 					return
 				}

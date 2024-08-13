@@ -36,3 +36,8 @@ export const defaultInputClass =
 
 export const defaultLabelClass =
   "block mb-2 text-sm font-medium text-gray-900 dark:text-white";
+
+export interface PairRequest {
+	peerID: string,
+	message: string,
+};

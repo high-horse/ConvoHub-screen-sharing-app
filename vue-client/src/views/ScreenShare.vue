@@ -1,4 +1,8 @@
 <template>
+    <AlertComponent
+        :pairRequest="peerRequest"
+        @connectPeer="connectPeerHandler"
+    />
     <div>
         <button
             class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mx-3"
@@ -29,6 +33,7 @@
     <ClientsList
         :clientsList="clients"
         :myWsID="myWsId"
+        :peerRequest="peerRequest"
         @connectPeer="handleConnectPeer"
     />
     <div></div>
@@ -39,7 +44,7 @@ import { ref, onMounted } from "vue";
 import { useWebSocket } from "../composables/useWebSocket";
 
 import ClientsList from "../components/ClientsList.vue";
-
+import AlertComponent from "../components/common/units/AlertComponent.vue";
 const {
     startWebSocket,
     startCapture,
@@ -48,6 +53,7 @@ const {
     clients,
     myWsId,
     sendPeerRequest,
+    peerRequest,
 } = useWebSocket();
 const videoElement = ref<HTMLVideoElement | null>(null);
 const captureInProgress = ref(false);
@@ -74,5 +80,14 @@ onMounted(() => {
 function handleConnectPeer(peerId: string): void {
     console.log("connect to peer: ", peerId);
     sendPeerRequest(peerId);
+}
+
+function connectPeerHandler(status: boolean): void {
+    peerRequest.value = null;
+    if (status) {
+        // send approve request
+    } else {
+        // send deny request
+    }
 }
 </script>

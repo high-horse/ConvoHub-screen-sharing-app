@@ -1,5 +1,5 @@
 import { ref } from "vue";
-import { EventType, Event } from '../types.ts';
+import { EventType, Event, PairRequest } from '../types.ts';
 
 export function useWebSocket() {
   const socket = ref<WebSocket | null>(null);
@@ -8,6 +8,7 @@ export function useWebSocket() {
   const sharedVideo = ref<HTMLVideoElement | null>(null);
   const clients = ref<string[]>([]); // To store the list of client IDs
   const myWsId = ref<string | null>(null);
+  const peerRequest = ref<PairRequest | null>(null);
   
   function startWebSocket() {
     if(socket.value) {
@@ -61,6 +62,10 @@ export function useWebSocket() {
       case EventType.PING:
         console.log("Recieved PING from server");
         sendEvent(EventType.PONG, "");
+        break;
+        
+      case EventType.PEER_REQUEST_SEND:
+        peerRequest.value = JSON.parse(event.payload)
         break;
         
       default:
@@ -142,8 +147,12 @@ export function useWebSocket() {
   }
   
   function sendPeerRequest(peerId: string) {
+    const payload = {
+      'peerId'  : peerId,
+      'message' : "REQUEST"
+    }; 
     if(socket.value) {
-      sendEvent(EventType.PEER_REQUEST_SEND, peerId)
+      sendEvent(EventType.PEER_REQUEST_SEND, JSON.stringify(payload))
     }
   }
   
@@ -155,5 +164,6 @@ export function useWebSocket() {
     clients,
     myWsId,
     sendPeerRequest,
+    peerRequest
   }
 }

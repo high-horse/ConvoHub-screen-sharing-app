@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -41,4 +42,33 @@ func HandleImageEvent(client *Client, payload string) {
 func handleTextEvent(client *Client, payload string) {
 	// Handle text event (example: just logging the text)
 	log.Printf("Received text from client %s: %s\n", client.ID, payload)
+}
+
+
+
+func HandlePeerRequestEvent(Client *Client, payload string) {
+	pairReq := PairRequest{}
+	
+	err := json.Unmarshal([]byte(payload), &pairReq)
+	if err != nil {
+		log.Println("error decoding json:", err)
+		return
+	}
+	newPayload, err := json.Marshal(PairRequest{
+		PeerID: Client.ID,
+		Message: pairReq.Message,
+	})
+	if err != nil {
+		log.Println("error marshalling payload:", err)
+		return
+	}
+	event := Event{
+		Type: EventPeerRequest,
+		Payload: string(newPayload),
+	}
+	if client, exists := clients[pairReq.PeerID]; exists {
+		client.Send <- event
+	} else {
+		fmt.Println("Client with ID %s not found.", pairReq.PeerID)
+	}
 }

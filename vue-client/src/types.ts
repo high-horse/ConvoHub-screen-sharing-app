@@ -40,8 +40,8 @@ export const defaultLabelClass =
 
 export interface PairRequest {
 	peerID: string,
-	// message: string,
-	message: PayloadMessage,
+	message: string,
+	// message: PayloadMessage,
 };
 
 export interface PayloadMessage {

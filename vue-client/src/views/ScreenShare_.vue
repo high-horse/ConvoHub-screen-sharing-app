@@ -41,41 +41,21 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { useWebSocket } from "../composables/useWebSocket";
-import { useEvents } from "../composables/useEvents";
-import {useScreenCapture} from "../composables/useScreenCapture";""
-import { usePeerManagement } from "../composables/usePeerManagement";
+import { _useWebSocket } from "../composables/_useWebSocket";
 
 import ClientsList from "../components/ClientsList.vue";
 import AlertComponent from "../components/common/units/AlertComponent.vue";
 const {
     startWebSocket,
-    // startCapture,
-    // stopCapture,
-    // sharedVideo,
-    // clients,
-    // myWsId,
-    // sendPeerRequest,
-    // peerRequest,
-    // respondePeerRequest,
-} = useWebSocket();
-
-const {
-
-} = useEvents();
-const {
-startCapture,
-stopCapture,
-sharedVideo
-} = useScreenCapture();
-
-const {
-clients,
-myWsId,
-sendPeerRequest,
-peerRequest,
-} = usePeerManagement();
-
+    startCapture,
+    stopCapture,
+    sharedVideo,
+    clients,
+    myWsId,
+    sendPeerRequest,
+    peerRequest,
+    respondePeerRequest,
+} = _useWebSocket();
 const videoElement = ref<HTMLVideoElement | null>(null);
 const captureInProgress = ref(false);
 

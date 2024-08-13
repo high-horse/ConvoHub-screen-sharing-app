@@ -58,5 +58,6 @@ export function useScreenCapture() {
   return {
     startCapture,
     stopCapture,
+    sharedVideo
   };
 }

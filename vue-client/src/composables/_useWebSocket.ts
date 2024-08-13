@@ -1,7 +1,7 @@
 import { ref } from "vue";
 import { EventType, Event, PairRequest } from "../types.ts";
 
-export function useWebSocket() {
+export function _useWebSocket() {
   const socket = ref<WebSocket | null>(null);
   const mediaStream = ref<MediaStream | null>(null);
   const captureInterval = ref<number | null>(null);

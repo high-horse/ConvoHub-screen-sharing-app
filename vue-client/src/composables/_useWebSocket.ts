@@ -1,210 +1,79 @@
 import { ref } from "vue";
-import { EventType, Event, PairRequest } from "../types.ts";
+import { Event, EventType, WebSocketService, PeerManagementService, EventService } from '../types.ts'
 
-export function _useWebSocket() {
+export function createWebSocketService(
+  peerManagementService: PeerManagementService,
+  eventService: EventService
+): WebSocketService {
   const socket = ref<WebSocket | null>(null);
-  const mediaStream = ref<MediaStream | null>(null);
-  const captureInterval = ref<number | null>(null);
-  const sharedVideo = ref<HTMLVideoElement | null>(null);
-  const clients = ref<string[]>([]); // To store the list of client IDs
-  const myWsId = ref<string | null>(null);
-  const peerRequest = ref<PairRequest | null>(null);
-  const myPair = ref<string | null>(null);
+  const URL: string = "ws://127.0.0.1:8000/ws";
 
+  
   function startWebSocket() {
-    if (socket.value) {
-      console.log("Websocket already connected.");
-      return;
-    }
-
-    socket.value = new WebSocket("ws://127.0.0.1:8000/ws");
-
+    if (socket.value) return;
+    
+    socket.value = new WebSocket(URL)
+    
     socket.value.onopen = () => {
-      console.log("Websocket connected.");
-      // sendEvent(EventType.TEXT, "Websocket connectio established");
-      setTimeout(() => {
-        sendEvent(EventType.CLIENT_READY, "Websocket connection established");
-      }, 1000);
-    };
-
+      console.log("Websocket Connected");
+      sendEvent(EventType.CLIENT_READY, "WebSocket connection established.")
+    }
+    
     socket.value.onclose = () => {
-      console.log("Websocket disconnected");
+      console.log("Websocket Disonnected");
       socket.value = null;
-    };
-
+    }
+    
     socket.value.onerror = (error) => {
-      console.error("websocket error", error);
-    };
-
+      console.error("WebSocket Error :", error)
+    }
+    
     socket.value.onmessage = (event) => {
       const data = event.data;
-      console.log("Recieved Message from WS :", data);
-
+      console.log("Recieved message from WS:", data);
+      
       try {
         const parsedData = JSON.parse(data);
-        handleEvent(parsedData as Event);
-      } catch (error) {
-        console.error("Error parsing message :", error);
+        handleEvent(parsedData as Event)
+      } catch(error) {
+        console.error("Error Parsing Message:", error)
       }
-    };
+    }
   }
+  
+  function sendEvent(type: string, payload: string):void {
+    if(socket.value) {
+      const message = JSON.stringify({ type, payload });
+      socket.value.send(message);
+    }
+  }
+  
   function handleEvent(event: Event) {
     console.log("handleevent:", event);
     switch (event.type) {
       case EventType.UPDATE_CLIENT:
-        clients.value = event.payload.split(",");
-        console.log("Updated client list:", clients.value);
+        eventService.handleUpdateClientEvent(event);
         break;
 
       case EventType.NEW_CONNECTION:
-        myWsId.value = event.payload;
+        eventService.handleNewConnectionEvent(event);
         break;
 
       case EventType.PING:
-        console.log("Recieved PING from server");
-        sendEvent(EventType.PONG, "");
+        eventService.handlePingEvent(event);
         break;
 
-      case EventType.PEER_REQUEST_SEND: { // peerRequest.value
-        let temp: PairRequest = JSON.parse(event.payload);
-        if (temp.message === "REQUEST") {
-          peerRequest.value = temp;
-        } else if (temp.message.split(":")[0] === "RESPONSE") {
-          // start sharing screen and emit the image to the server.
-        } else {
-          console.log("Unrecognized PEER_REQUEST_SEND:", temp.message);
-        }
+      case EventType.PEER_REQUEST_SEND:  
+      case EventType.PEER_REQUEST_RESPONSE: 
+        peerManagementService.handlePeerRequestEvent(event);
         break;
-      }
-
-      case EventType.PEER_REQUEST_RESPONSE: {
-        let temp: PairRequest = JSON.parse(event.payload);
-        if (temp.message.split(":")[0] === "RESPONSE") {
-          if (
-            temp.message.split(":")[1] == "true"
-          ) {
-             myPair.value = temp.peerID;
-            // start sharing the screen
-          }
-        } else {
-          console.log("Unrecognized PEER_REQUEST_RESPONSE:", temp.message);
-        }
-        break;
-      }
-
+      
       default:
         console.log("Unknown event type:", event.type);
     }
   }
-
-  async function startCapture(videoElement: HTMLVideoElement) {
-    try {
-      if (!socket.value) {
-        console.error("WebSocket not connected.");
-        return;
-      }
-      mediaStream.value = await navigator.mediaDevices.getDisplayMedia({
-        video: { cursor: "always" },
-        audio: false,
-      });
-      videoElement.srcObject = mediaStream.value;
-      sharedVideo.value = videoElement;
-
-      // startWebSocket();
-      captureInterval.value = setInterval(captureAndSendImage, 1000); // Capture every second
-    } catch (err) {
-      console.error("Error: " + err);
-    }
-  }
-
-  function stopCapture() {
-    if (mediaStream.value) {
-      const tracks = mediaStream.value.getTracks();
-      tracks.forEach((track) => track.stop());
-      if (sharedVideo.value) {
-        sharedVideo.value.srcObject = null;
-      }
-      if (captureInterval.value) {
-        clearInterval(captureInterval.value);
-      }
-      if (socket.value) socket.value.close();
-    }
-  }
-
-  function captureAndSendImage() {
-    if (!sharedVideo.value) return;
-
-    const canvas = document.createElement("canvas");
-    canvas.width = sharedVideo.value.videoWidth;
-    canvas.height = sharedVideo.value.videoHeight;
-    const context = canvas.getContext("2d");
-
-    if (context) {
-      context.drawImage(sharedVideo.value, 0, 0, canvas.width, canvas.height);
-
-      canvas.toBlob(
-        (blob) => {
-          if (blob) {
-            const reader = new FileReader();
-            reader.onloadend = function () {
-              const base64data = reader.result;
-              sendEvent(EventType.IMAGE, base64data as string);
-            };
-            reader.readAsDataURL(blob);
-          }
-        },
-        "image/jpeg",
-        0.7,
-      );
-    }
-  }
-
-  function sendEvent(type: string, payload: string) {
-    if (socket.value) {
-      const message = JSON.stringify({ type, payload });
-      // socket.value.send(`${type}:${payload}`)
-      socket.value.send(message);
-    }
-  }
-
-  function sendPeerRequest(peerId: string) {
-    const payload = {
-      peerId: peerId,
-      message: "REQUEST",
+    return {
+      startWebSocket,
+      sendEvent,
     };
-    if (socket.value) {
-      sendEvent(EventType.PEER_REQUEST_SEND, JSON.stringify(payload));
-    }
-  }
-
-  function respondePeerRequest(status: boolean, peerId: string): void {
-    const payload = {
-      peerId: peerId,
-      message: `RESPONSE:${status}`,
-    };
-
-    console.log(payload);
-
-    peerRequest.value = null;
-    myPair.value = peerId;
-    if (socket.value) {
-      sendEvent(EventType.PEER_REQUEST_RESPONSE, JSON.stringify(payload));
-      
-      if(status) {
-        // start to share screen to pair
-      }
-    }
-  }
-
-  return {
-    startWebSocket,
-    startCapture,
-    stopCapture,
-    sharedVideo,
-    clients,
-    myWsId,
-    sendPeerRequest,
-    peerRequest,
-    respondePeerRequest,
-  };
 }

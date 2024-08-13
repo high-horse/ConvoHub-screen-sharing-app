@@ -6,7 +6,7 @@
     <div>
         <button
             class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mx-3"
-            @click="startWebSocket"
+            @click="webSocketService.startWebSocket"
         >
             Start WebSocket
         </button>
@@ -31,9 +31,9 @@
     </div>
 
     <ClientsList
-        :clientsList="clients"
-        :myWsID="myWsId"
-        :peerRequest="peerRequest"
+        :clientsList="peerManagementService.clients"
+        :myWsID="peerManagementService.myWsId"
+        :peerRequest="peerManagementService.peerRequest"
         @connectPeer="handleConnectPeer"
     />
     <div></div>
@@ -41,51 +41,48 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { _useWebSocket } from "../composables/_useWebSocket";
+import { useServices } from "../composables/useServices";
 
 import ClientsList from "../components/ClientsList.vue";
 import AlertComponent from "../components/common/units/AlertComponent.vue";
+
 const {
-    startWebSocket,
-    startCapture,
-    stopCapture,
-    sharedVideo,
-    clients,
-    myWsId,
-    sendPeerRequest,
-    peerRequest,
-    respondePeerRequest,
-} = _useWebSocket();
+  webSocketService,
+  peerManagementService,
+  screenCaptureService,
+} = useServices();
+
+
 const videoElement = ref<HTMLVideoElement | null>(null);
 const captureInProgress = ref(false);
 
 function startCaptureHandler() {
-    console.log(clients);
+    console.log(peerManagementService.clients);
     if (videoElement.value) {
         captureInProgress.value = true;
-        startCapture(videoElement.value);
+        screenCaptureService.startCapture(videoElement.value);
     }
 }
 
 function stopCaptureHandler() {
     captureInProgress.value = false;
-    stopCapture();
+    screenCaptureService.stopCapture();
 }
 
 onMounted(() => {
     if (videoElement.value) {
-        sharedVideo.value = videoElement.value;
+        screenCaptureService.sharedVideo.value = videoElement.value;
     }
 });
 
 function handleConnectPeer(peerId: string): void {
     console.log("connect to peer: ", peerId);
-    sendPeerRequest(peerId);
+    peerManagementService.sendPeerRequest(peerId);
 }
 
 function connectPeerHandler(status: boolean): void {
-    const peerId = peerRequest.value.peerId;
-    respondePeerRequest(status, peerId);
-    peerRequest.value = null;
+    const peerId = peerManagementService.peerRequest.value.peerId;
+    peerManagementService.respondPeerRequest(status, peerId);
+    peerManagementService.peerRequest.value = null;
 }
 </script>

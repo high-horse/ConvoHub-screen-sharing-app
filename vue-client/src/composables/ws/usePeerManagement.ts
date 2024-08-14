@@ -1,12 +1,12 @@
+// usePeerManagement.ts
 import { ref } from "vue";
-import { PairRequest, Event, EventType, PeerManagementService, WebSocketService } from '../types.ts';
+import { PairRequest, Event, EventType } from '../../types';
 
-export function createPeerManagementService(webSocketService: WebSocketService): PeerManagementService {
+export function usePeerManagement() {
   const clients = ref<string[]>([]);
   const myWsId = ref<string | null>(null);
   const peerRequest = ref<PairRequest | null>(null);
   const myPair = ref<string | null>(null);
-  
   
   function handlePeerRequestEvent(event: Event) {
     const temp: PairRequest = JSON.parse(event.payload);
@@ -23,27 +23,28 @@ export function createPeerManagementService(webSocketService: WebSocketService):
         console.log("unexpeccted response :", resp)
       }
     } else {
-      console.log("Unrecognized EVENT:", event);
       console.log("Unrecognized PEER_REQUEST_SEND:", temp.message);
     }
   }
   
-  function sendPeerRequest(peerId: string) {
+  function sendPeerRequest(peerId: string, sendEvent: (type: string, payload: string) => void) {
+    // ... (keep the existing implementation, but use the passed sendEvent function)
     const payload = {
-      peerId: peerId,
-      message: "REQUEST",
+        peerId: peerId,
+        message: "REQUEST",
     };
-    webSocketService.sendEvent(EventType.PEER_REQUEST_SEND, JSON.stringify(payload));
+    sendEvent(EventType.PEER_REQUEST_SEND, JSON.stringify(payload));
   }
   
-  function respondPeerRequest(status: boolean, peerId: string) {
+  function respondPeerRequest(status: boolean, peerId: string, sendEvent: (type: string, payload: string) => void) {
+    // ... (keep the existing implementation, but use the passed sendEvent function)
     const payload = {
       peerId: peerId,
       message: `RESPONSE:${status}`,
     };
     peerRequest.value = null;
     myPair.value = peerId;
-    webSocketService.sendEvent(EventType.PEER_REQUEST_RESPONSE, JSON.stringify(payload));
+    sendEvent(EventType.PEER_REQUEST_RESPONSE, JSON.stringify(payload));
   }
   
   return {
@@ -54,5 +55,5 @@ export function createPeerManagementService(webSocketService: WebSocketService):
     sendPeerRequest,
     respondPeerRequest,
     handlePeerRequestEvent,
-  }
+  };
 }

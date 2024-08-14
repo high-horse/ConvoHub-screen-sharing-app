@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strings"
 	"sync"
 	"time"
 
@@ -24,6 +23,11 @@ var (
 	clients     = make(map[string]*Client)
 	clientsLock sync.RWMutex
 	broadcast   = make(chan Event)
+)
+
+var (
+	pairedClients = make(map[string]string)
+    pairMutex     sync.RWMutex
 )
 
 func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
@@ -149,6 +153,10 @@ func (c *Client) writePump() {
 func (c *Client) removeClient() {
 	clientsLock.Lock()
 	defer clientsLock.Unlock()
+	
+	// cleanup pair register.
+	unpairClient(c.ID)
+	
 	delete(clients, c.ID)
 	close(c.Send)
 	log.Printf("Client %s removed", c.ID)
@@ -179,19 +187,6 @@ func handleEvent(client *Client, event Event) {
 	default:
 		log.Printf("Unknown event type: %s \t\t %s\n", event.Type, event.Payload)
 	}
-}
-
-func getClientIDs() string {
-	clientsLock.RLock()
-	defer clientsLock.RUnlock()
-
-	var ids []string
-	for id := range clients {
-		ids = append(ids, id)
-	}
-	clientList := strings.Join(ids, ",")
-	log.Printf("Current clients: %s", clientList)
-	return clientList
 }
 
 func broadcastHandler() {

@@ -7,6 +7,7 @@ export function usePeerManagement() {
   const myWsId = ref<string | null>(null);
   const peerRequest = ref<PairRequest | null>(null);
   const myPair = ref<string | null>(null);
+  // const paired
   
   function handlePeerRequestEvent(event: Event) {
     const temp: PairRequest = JSON.parse(event.payload);
@@ -17,6 +18,7 @@ export function usePeerManagement() {
       if (resp === "true") {
         myPair.value = temp.peerID;
         // start sharing screen and emit the image to the server.
+        // start sharing the screen, this is the request recievers end;
       } else if (resp === "false") {
         // alert request was rejected.
       } else {
@@ -45,6 +47,8 @@ export function usePeerManagement() {
     peerRequest.value = null;
     myPair.value = peerId;
     sendEvent(EventType.PEER_REQUEST_RESPONSE, JSON.stringify(payload));
+    
+    // start sharing the screen, this is the request senders end;
   }
   
   return {

@@ -76,7 +76,7 @@ function handleConnectPeer(peerId: string): void {
 }
 
 function connectPeerHandler(status: boolean): void {
-    const peerId = peerManagementService.peerRequest.value.peerId;
+    const peerId = peerRequest.value.peerId;
     respondPeerRequest(status, peerId);
     peerRequest.value = null;
 }

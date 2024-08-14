@@ -4,6 +4,8 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+// type ClientID string
+
 type Client struct {
 	ID string
 	Conn *websocket.Conn
@@ -25,8 +27,6 @@ const (
 	EventPeerRequestResponse = "PEER_REQUEST_RESPONSE"
 )
 
-// var readDeadlineLimit = time.Now().Add(60 * time.Second)
-// var writeDeadlineLimit = time.Now().Add(10 * time.Second)
 var readLimit = 10 * 1024 * 1024
 
 type PairRequest struct {

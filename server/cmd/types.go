@@ -25,6 +25,8 @@ const (
 	EventTypeReady = "CLIENT_READY"
 	EventPeerRequest = "PEER_REQUEST_SEND"
 	EventPeerRequestResponse = "PEER_REQUEST_RESPONSE"
+	EventPeerPaired = "PEER_PAIRED"
+	EventStreamImagePeer = "STREAM_IMAGE_PEER"
 )
 
 var readLimit = 10 * 1024 * 1024

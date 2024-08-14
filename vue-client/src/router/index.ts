@@ -5,8 +5,8 @@ import { auth } from '../store/auth'
 import Login from '../views/Login.vue'
 import Home from '../views/Home.vue'
 
-// import ScreenShare from '../views/ScreenShare.vue'
-import ScreenShare from '../views/_ScreenShare.vue'
+import ScreenShare from '../views/ScreenShare.vue'
+// import ScreenShare from '../views/_ScreenShare.vue'
 
 // _ScreenShare.vue
 

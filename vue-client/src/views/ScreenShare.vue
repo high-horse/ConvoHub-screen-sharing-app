@@ -55,9 +55,9 @@ const {
     sendPeerRequest,
     peerRequest,
     respondePeerRequest,
+    captureInProgress
 } = useWebSocket();
 const videoElement = ref<HTMLVideoElement | null>(null);
-const captureInProgress = ref(false);
 
 function startCaptureHandler() {
     console.log(clients);

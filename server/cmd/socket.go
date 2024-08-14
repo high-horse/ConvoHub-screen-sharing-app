@@ -183,6 +183,8 @@ func handleEvent(client *Client, event Event) {
 		HandlePeerRequestEvent(client, event.Payload)
 	case EventPeerRequestResponse: 
 		HandlePeerRequestResponseEvent(client, event.Payload)
+	case EventStreamImagePeer:
+		HandleStreamImagePeerEvent(client, event.Payload)
 		
 	default:
 		log.Printf("Unknown event type: %s \t\t %s\n", event.Type, event.Payload)

@@ -71,104 +71,66 @@ func HandlePeerRequestEvent(client *Client, payload string) {
 	}
 }
 
-// func HandlePeerRequestResponseEvent(client *Client, payload string) {
-// 	pairRes := PairRequest{}
-// 	err := json.Unmarshal([]byte(payload), &pairRes)
-// 	if err != nil {
-// 		log.Println("error decoding json:", err)
-// 		return
-// 	}
-
-// 	fmt.Println("pairRes:", pairRes.PeerID)
-// 	fmt.Println("clientID:", client.ID)
-
-// 	newPayload, err := json.Marshal(PairRequest{
-// 		PeerID:  client.ID,
-// 		Message: pairRes.Message,
-// 	})
-// 	if err != nil {
-// 		log.Println("error marshalling payload:", err)
-// 		return
-// 	}
-
-// 	event := Event{
-// 		Type:    EventPeerRequestResponse,
-// 		Payload: string(newPayload),
-// 	}
-// 	if client, exists := clients[pairRes.PeerID]; exists {
-// 		client.Send <- event
-
-// 		resMes := strings.Split(pairRes.Message, ":")
-// 		if resMes[1] == "true" {
-// 			fmt.Println("to :%s \t from :%s", pairRes.PeerID, client.ID)
-			
-// 			err := pairClients(pairRes.PeerID, client.ID)
-// 			if err != nil {
-// 				log.Printf("Error pairing clients: %v", err)
-// 				return
-// 			}
-
-// 			client.Send <- Event{
-// 				Type:    "PEER_PAIRED",
-// 				Payload: pairRes.PeerID,
-// 			}
-// 			clients[pairRes.PeerID].Send <- Event{
-// 				Type:    "PEER_PAIRED",
-// 				Payload: client.ID,
-// 			}
-// 			logAllPairedClients()
-// 		}
-// 	} else {
-// 		fmt.Println("Client with ID %s not found.", pairRes.PeerID)
-
-// 	}
-
-// }
-
 func HandlePeerRequestResponseEvent(client *Client, payload string) {
-    pairRes := PairRequest{}
-    err := json.Unmarshal([]byte(payload), &pairRes)
-    if err != nil {
-        log.Println("error decoding json:", err)
-        return
-    }
+	pairRes := PairRequest{}
+	err := json.Unmarshal([]byte(payload), &pairRes)
+	if err != nil {
+		log.Println("error decoding json:", err)
+		return
+	}
 
-    newPayload, err := json.Marshal(PairRequest{
-        PeerID:  client.ID,
-        Message: pairRes.Message,
-    })
-    if err != nil {
-        log.Println("error marshalling payload:", err)
-        return
-    }
+	newPayload, err := json.Marshal(PairRequest{
+		PeerID:  client.ID,
+		Message: pairRes.Message,
+	})
+	if err != nil {
+		log.Println("error marshalling payload:", err)
+		return
+	}
 
-    event := Event{
-        Type:    EventPeerRequestResponse,
-        Payload: string(newPayload),
-    }
-    if peerClient, exists := clients[pairRes.PeerID]; exists {
-        peerClient.Send <- event
+	event := Event{
+		Type:    EventPeerRequestResponse,
+		Payload: string(newPayload),
+	}
+	if peerClient, exists := clients[pairRes.PeerID]; exists {
+		peerClient.Send <- event
 
-        resMes := strings.Split(pairRes.Message, ":")
-        if resMes[1] == "true" {
-            
-            err := pairClients(pairRes.PeerID, client.ID)
-            if err != nil {
-                log.Printf("Error pairing clients: %v", err)
-                return
-            }
+		resMes := strings.Split(pairRes.Message, ":")
+		if resMes[1] == "true" {
 
-            client.Send <- Event{
-                Type:    "PEER_PAIRED",
-                Payload: pairRes.PeerID,
-            }
-            peerClient.Send <- Event{
-                Type:    "PEER_PAIRED",
-                Payload: client.ID,
-            }
-            logAllPairedClients()
-        }
-    } else {
-        fmt.Printf("Client with ID %s not found.\n", pairRes.PeerID)
-    }
+			err := pairClients(pairRes.PeerID, client.ID)
+			if err != nil {
+				log.Printf("Error pairing clients: %v", err)
+				return
+			}
+
+			client.Send <- Event{
+				Type:    EventPeerPaired,
+				Payload: pairRes.PeerID,
+			}
+			peerClient.Send <- Event{
+				Type:    EventPeerPaired,
+				Payload: client.ID,
+			}
+			logAllPairedClients()
+		}
+	} else {
+		fmt.Printf("Client with ID %s not found.\n", pairRes.PeerID)
+	}
+}
+
+func HandleStreamImagePeerEvent(client *Client, payload string) {
+	// get the pair id from pair, and stream it to the client id
+	peerId, exists := getPairedClient(client.ID)
+	if exists {
+		if peerClient, exists := clients[peerId]; exists {
+
+			peerClient.Send <- Event{
+				Type:    EventStreamImagePeer,
+				Payload: payload,
+			}
+		}
+	} else {
+		fmt.Printf("Client with ID %s or %s is not found in the pair registry.\n", peerId, client.ID)
+	}
 }

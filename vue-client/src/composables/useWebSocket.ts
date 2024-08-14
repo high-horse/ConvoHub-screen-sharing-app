@@ -10,6 +10,7 @@ export function useWebSocket() {
   const myWsId = ref<string | null>(null);
   const peerRequest = ref<PairRequest | null>(null);
   const myPair = ref<string | null>(null);
+  const captureInProgress = ref(false);
 
   function startWebSocket() {
     if (socket.value) {
@@ -64,6 +65,10 @@ export function useWebSocket() {
         console.log("Recieved PING from server");
         sendEvent(EventType.PONG, "");
         break;
+      
+      case EventType.PEER_PAIRED:
+        handlePeerPairedEvent(event)
+        break;
 
       case EventType.PEER_REQUEST_SEND: { // peerRequest.value
         let temp: PairRequest = JSON.parse(event.payload);
@@ -83,8 +88,8 @@ export function useWebSocket() {
           if (
             temp.message.split(":")[1] == "true"
           ) {
-             myPair.value = temp.peerID;
-            // start sharing the screen
+            //  myPair.value = temp.peerID;
+            // // start sharing the screen
           }
         } else {
           console.log("Unrecognized PEER_REQUEST_RESPONSE:", temp.message);
@@ -148,7 +153,8 @@ export function useWebSocket() {
             const reader = new FileReader();
             reader.onloadend = function () {
               const base64data = reader.result;
-              sendEvent(EventType.IMAGE, base64data as string);
+              // sendEvent(EventType.IMAGE, base64data as string);
+              sendEvent(EventType.STREAM_IMAGE_PEER, base64data as string);
             };
             reader.readAsDataURL(blob);
           }
@@ -193,6 +199,16 @@ export function useWebSocket() {
       if(status) {
         // start to share screen to pair
       }
+    }
+  }
+  
+  function handlePeerPairedEvent(event: Event) {
+    myPair.value = event.payload;
+    
+    // start sharing screen event.
+    if (sharedVideo.value) {
+      captureInProgress.value = true;
+      startCapture(sharedVideo.value);
     }
   }
 

@@ -1,0 +1,121 @@
+If you've updated your GitHub username and aren't receiving errors but still notice that the old username appears when interacting with repositories, there are several places and settings to verify:
+1. Check Remote URLs
+
+When cloning a new repository or interacting with an existing one, ensure that the remote URL is correct:
+
+    Verify Remote URL for New Repositories:
+    After cloning a new repository, navigate into the repository directory and check the remote URL:
+
+    bash
+
+cd path/to/new-repository
+git remote -v
+
+The URL should reflect your new GitHub username:
+
+perl
+
+origin  https://github.com/new-username/repo-name.git (fetch)
+origin  https://github.com/new-username/repo-name.git (push)
+
+If it still shows the old username, update it as follows:
+
+bash
+
+    git remote set-url origin https://github.com/new-username/repo-name.git
+
+2. Check Local Git Configuration
+
+Sometimes, Git's local configuration may still have references to your old username:
+
+    Check Local Configurations:
+
+    bash
+
+git config --list --local
+
+Look for any entries related to user.name or user.email. Update them if necessary:
+
+bash
+
+git config --local user.name "New Username"
+git config --local user.email "your-email@example.com"
+
+Check Global Configurations:
+
+bash
+
+git config --list --global
+
+Ensure user.name and user.email are up to date:
+
+bash
+
+    git config --global user.name "New Username"
+    git config --global user.email "your-email@example.com"
+
+3. Clear Git Credential Cache
+
+If your Git credentials are cached, they may still be using the old username. Clear your credentials cache:
+
+    For macOS Keychain:
+        Open Keychain Access.
+        Search for GitHub-related entries.
+        Delete any old or incorrect entries.
+
+    For Windows Credential Manager:
+        Open Credential Manager from the Control Panel.
+        Locate and remove any GitHub-related credentials.
+
+    For Linux Credential Helper:
+    If you're using git-credential-store, clear the credentials:
+
+    bash
+
+    git credential-cache exit
+
+4. Update GitHub SSH Key (if applicable)
+
+If you use SSH keys for authentication, ensure your SSH key is correctly associated with your new GitHub account:
+
+    Check SSH Keys:
+
+    bash
+
+ssh-add -l
+
+Ensure the key listed is associated with your new GitHub account.
+
+Update SSH Config File (if applicable):
+Edit ~/.ssh/config to make sure it reflects the correct GitHub hostname and identity file.
+
+bash
+
+    Host github.com
+      User git
+      Hostname github.com
+      IdentityFile ~/.ssh/id_rsa
+
+5. Verify GitHub Repository Access
+
+Make sure you have access to repositories under your new username:
+
+    Create a Test Repository:
+    Create a new repository under your new username on GitHub and clone it to verify that the username is correctly reflected.
+
+    Push Changes:
+    Try pushing changes to verify that there are no authentication issues.
+
+6. Check for Old Username in Commit History
+
+If the old username appears in commit history, it might be due to commits made before the username change. This is normal and won’t affect future commits:
+
+    Check Commit Author:
+
+    bash
+
+    git log --pretty=format:'%an <%ae>'
+
+    This shows the author name and email in commit history. If it still shows the old username, it’s likely because those commits were made before the change.
+
+By following these steps, you should be able to ensure that your Git configuration, credentials, and repository URLs are updated to reflect your new GitHub username. If there are no errors but you're still seeing issues, it's often related to cached credentials or outdated remote URLs.

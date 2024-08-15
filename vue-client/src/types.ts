@@ -1,4 +1,3 @@
-import { Ref } from "vue";
 
 export enum EventType  {
   TEXT = "TEXT",

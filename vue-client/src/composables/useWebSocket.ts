@@ -36,7 +36,7 @@ export function useWebSocket() {
       socket.value = null;
     };
 
-    socket.value.onerror = (error: Error) => {
+    socket.value.onerror = (error) => {
       console.error("websocket error", error);
     };
 
@@ -289,6 +289,7 @@ export function useWebSocket() {
     respondPeerRequest,
     recievedImage,
     disconnectPair,
-    isCapturing
+    isCapturing,
+    captureInProgress
   };
 }

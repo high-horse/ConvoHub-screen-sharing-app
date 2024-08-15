@@ -23,7 +23,7 @@ func getClientIDs() string {
 
 
 func pairClients(client1ID, client2ID string) error {
-	fmt.Println("pairing: %s \t and %s\t", client1ID, client2ID)
+	fmt.Printf("pairing: %s \t and %s\t\n", client1ID, client2ID)
     pairMutex.Lock()
     defer pairMutex.Unlock()
 

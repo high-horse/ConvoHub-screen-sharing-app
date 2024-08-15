@@ -67,7 +67,7 @@ func HandlePeerRequestEvent(client *Client, payload string) {
 	if client, exists := clients[pairReq.PeerID]; exists {
 		client.Send <- event
 	} else {
-		fmt.Println("Client with ID %s not found.", pairReq.PeerID)
+		fmt.Printf("Client with ID %s not found.", pairReq.PeerID)
 	}
 }
 

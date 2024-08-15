@@ -121,7 +121,7 @@ export function useWebSocket() {
       sharedVideo.value = videoElement;
 
       // startWebSocket();
-      captureInterval.value = setInterval(captureAndSendImage, 1000); // Capture every second
+      captureInterval.value = setInterval(captureAndSendImage, 50); // Capture every second
     } catch (err) {
       console.error("Error: " + err);
     }
@@ -221,6 +221,17 @@ export function useWebSocket() {
     recievedImage.value = event.payload;
   }
   
+  function disconnectPair() {
+    if (socket.value) {
+      const pair_id = myPair.value
+      const payload = {
+        myPair : pair_id
+      }
+      sendEvent(EventType.DISCONNECT_PAIR_SHARING, JSON.stringify(payload));
+      // cleanup events 
+    }
+  }
+  
   return {
     startWebSocket,
     startCapture,
@@ -232,5 +243,6 @@ export function useWebSocket() {
     peerRequest,
     respondePeerRequest,
     recievedImage,
+    disconnectPair
   };
 }

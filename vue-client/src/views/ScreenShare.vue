@@ -16,7 +16,8 @@ const {
     peerRequest,
     respondePeerRequest,
     captureInProgress,
-    recievedImage
+    recievedImage,
+    disconnectPair,
 } = useWebSocket();
 const videoElement = ref<HTMLVideoElement | null>(null);
 
@@ -86,6 +87,13 @@ function connectPeerHandler(status: boolean): void {
         
         <div class="video-content-recieve-div" v-if="recievedImage">
             <img :src="recievedImage" alt="Received Image" />
+            <button
+                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mx-3"
+                @click="disconnectPair"
+            >
+                Disconnect
+            </button>
+
         </div>
     
     </div>

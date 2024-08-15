@@ -134,3 +134,9 @@ func HandleStreamImagePeerEvent(client *Client, payload string) {
 		fmt.Printf("Client with ID %s or %s is not found in the pair registry.\n", peerId, client.ID)
 	}
 }
+
+
+func HandlePeerDisconnectEvent(client *Client, event Event) {
+	// disconnectRe := event.Payload
+	// TODO : implement and cleanup
+}

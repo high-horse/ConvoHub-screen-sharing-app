@@ -2,16 +2,18 @@ import { ref } from "vue";
 import { EventType, Event, PairRequest } from "../types.ts";
 
 export function useWebSocket() {
-  const socket = ref<WebSocket | null>(null);
-  const mediaStream = ref<MediaStream | null>(null);
-  const captureInterval = ref<number | null>(null);
-  const sharedVideo = ref<HTMLVideoElement | null>(null);
+  const socket = ref<WebSocket | null>(null); // Store socket ref
+  const mediaStream = ref<MediaStream | null>(null);  // Store mediashare ref
+  const captureInterval = ref<number | null>(null);   // store capture intervel
+  const sharedVideo = ref<HTMLVideoElement | null>(null); // store sharedVideo
   const clients = ref<string[]>([]); // To store the list of client IDs
-  const myWsId = ref<string | null>(null);
-  const peerRequest = ref<PairRequest | null>(null);
+  const myWsId = ref<string | null>(null);  // store my Ws Id
+  const peerRequest = ref<PairRequest | null>(null);  
   const myPair = ref<string | null>(null);
-  const captureInProgress = ref(false);
+  const captureInProgress = ref<boolean>(false);
   const recievedImage = ref<string | null>(null);
+  
+  const isCapturing = ref<boolean>(false);
 
   function startWebSocket() {
     if (socket.value) {
@@ -34,13 +36,13 @@ export function useWebSocket() {
       socket.value = null;
     };
 
-    socket.value.onerror = (error) => {
+    socket.value.onerror = (error: Error) => {
       console.error("websocket error", error);
     };
 
     socket.value.onmessage = (event) => {
       const data = event.data;
-      console.log("Recieved Message from WS :", data);
+      // console.log("Recieved Message from WS :", data);
 
       try {
         const parsedData = JSON.parse(data);
@@ -51,7 +53,7 @@ export function useWebSocket() {
     };
   }
   function handleEvent(event: Event) {
-    console.log("handleevent:", event);
+    // console.log("handleevent:", event);
     switch (event.type) {
       case EventType.UPDATE_CLIENT:
         clients.value = event.payload.split(",");
@@ -74,33 +76,21 @@ export function useWebSocket() {
       case EventType.STREAM_IMAGE_PEER:
         handleStreamImageRecv(event);
         break;
+      
 
-      case EventType.PEER_REQUEST_SEND: { // peerRequest.value
-        let temp: PairRequest = JSON.parse(event.payload);
-        if (temp.message === "REQUEST") {
-          peerRequest.value = temp;
-        } else if (temp.message.split(":")[0] === "RESPONSE") {
-          // start sharing screen and emit the image to the server.
-        } else {
-          console.log("Unrecognized PEER_REQUEST_SEND:", temp.message);
-        }
+      case EventType.PEER_REQUEST_SEND: {
+        handlePeerRequestSend(event)
         break;
       }
 
       case EventType.PEER_REQUEST_RESPONSE: {
-        let temp: PairRequest = JSON.parse(event.payload);
-        if (temp.message.split(":")[0] === "RESPONSE") {
-          if (
-            temp.message.split(":")[1] == "true"
-          ) {
-            //  myPair.value = temp.peerID;
-            // // start sharing the screen
-          }
-        } else {
-          console.log("Unrecognized PEER_REQUEST_RESPONSE:", temp.message);
-        }
+        handlePeerRequestRespond(event)
         break;
       }
+      
+      case EventType.DISCONNECT_PAIR_SHARING:
+        handlePeerDisconnected(event);
+        break;
 
       default:
         console.log("Unknown event type:", event.type);
@@ -121,7 +111,8 @@ export function useWebSocket() {
       sharedVideo.value = videoElement;
 
       // startWebSocket();
-      captureInterval.value = setInterval(captureAndSendImage, 50); // Capture every second
+      isCapturing.value = true;
+      captureInterval.value = setInterval(captureAndSendImage, 1000); // Capture every second
     } catch (err) {
       console.error("Error: " + err);
     }
@@ -142,7 +133,8 @@ export function useWebSocket() {
   }
 
   function captureAndSendImage() {
-    if (!sharedVideo.value) return;
+     if (!sharedVideo.value || !isCapturing.value) return;
+    // if (!sharedVideo.value) return;
 
     const canvas = document.createElement("canvas");
     canvas.width = sharedVideo.value.videoWidth;
@@ -177,7 +169,8 @@ export function useWebSocket() {
       socket.value.send(message);
     }
   }
-
+  
+  // Envoked from the view.
   function sendPeerRequest(peerId: string) {
     const payload = {
       peerId: peerId,
@@ -187,23 +180,42 @@ export function useWebSocket() {
       sendEvent(EventType.PEER_REQUEST_SEND, JSON.stringify(payload));
     }
   }
-
-  function respondePeerRequest(status: boolean, peerId: string): void {
+  
+  // Envoked from the switch.
+  function handlePeerRequestSend(event: Event): void {
+    let temp: PairRequest = JSON.parse(event.payload);
+    if (temp.message === "REQUEST") {
+      peerRequest.value = temp;
+    } else {
+      console.log("Unrecognized PEER_REQUEST_SEND:", temp.message);
+    }
+  }
+  
+  function respondPeerRequest(status: boolean, peerId: string): void {
     const payload = {
       peerId: peerId,
       message: `RESPONSE:${status}`,
     };
 
-    console.log(payload);
-
+    // console.log(payload);
+    // to alert the pair request.
     peerRequest.value = null;
-    myPair.value = peerId;
+    
     if (socket.value) {
       sendEvent(EventType.PEER_REQUEST_RESPONSE, JSON.stringify(payload));
-      
-      if(status) {
-        // start to share screen to pair
+    }
+  }
+  
+  function handlePeerRequestRespond(event: Event) : void {
+    let temp: PairRequest = JSON.parse(event.payload);
+    if (temp.message.split(":")[0] === "RESPONSE") {
+      if (
+        temp.message.split(":")[1] == "true"
+      ) {
+        console.log("Peer accepted the request. ")
       }
+    } else {
+      console.log("Unrecognized PEER_REQUEST_RESPONSE:", temp.message);
     }
   }
   
@@ -227,10 +239,43 @@ export function useWebSocket() {
       const payload = {
         myPair : pair_id
       }
+       console.log("Seding peer disconnect event:", event); // Debug log
       sendEvent(EventType.DISCONNECT_PAIR_SHARING, JSON.stringify(payload));
-      // cleanup events 
     }
   }
+  
+  function handlePeerDisconnected(event: Event) {
+    console.log("Handling peer disconnect event:", event); // Debug log
+    
+    isCapturing.value = false;
+    // Stop screen sharing and clean up media tracks
+    if (mediaStream.value) {
+      const tracks = mediaStream.value.getTracks();
+      tracks.forEach((track) => {
+        console.log(`Stopping track: ${track.kind}`); // Debug log
+        track.stop();
+      });
+  
+      if (sharedVideo.value) {
+        console.log("Clearing video element's srcObject"); // Debug log
+        sharedVideo.value.srcObject = null;
+      }
+    }
+  
+    // Clear the capture interval
+    if (captureInterval.value) {
+      console.log("Clearing capture interval"); // Debug log
+      clearInterval(captureInterval.value);
+      captureInterval.value = null;
+    }
+  
+    // Reset WebSocket-related states
+    console.log("Resetting states: myPair, captureInProgress, recievedImage"); // Debug log
+    myPair.value = null;
+    captureInProgress.value = false;
+    recievedImage.value = null; // Clear the last received image
+  }
+
   
   return {
     startWebSocket,
@@ -241,8 +286,9 @@ export function useWebSocket() {
     myWsId,
     sendPeerRequest,
     peerRequest,
-    respondePeerRequest,
+    respondPeerRequest,
     recievedImage,
-    disconnectPair
+    disconnectPair,
+    isCapturing
   };
 }

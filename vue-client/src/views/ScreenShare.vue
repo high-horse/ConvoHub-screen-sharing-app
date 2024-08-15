@@ -1,4 +1,3 @@
-
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { useWebSocket } from "../composables/useWebSocket";
@@ -14,15 +13,16 @@ const {
     myWsId,
     sendPeerRequest,
     peerRequest,
-    respondePeerRequest,
+    respondPeerRequest,
     captureInProgress,
     recievedImage,
     disconnectPair,
+    isCapturing,
 } = useWebSocket();
 const videoElement = ref<HTMLVideoElement | null>(null);
 
 function startCaptureHandler() {
-    console.log(clients);
+    // console.log(clients);
     if (videoElement.value) {
         captureInProgress.value = true;
         startCapture(videoElement.value);
@@ -30,7 +30,6 @@ function startCaptureHandler() {
 }
 
 function stopCaptureHandler() {
-    captureInProgress.value = false;
     stopCapture();
 }
 
@@ -47,8 +46,18 @@ function handleConnectPeer(peerId: string): void {
 
 function connectPeerHandler(status: boolean): void {
     const peerId = peerRequest.value.peerId;
-    respondePeerRequest(status, peerId);
+    respondPeerRequest(status, peerId);
     peerRequest.value = null;
+}
+
+function handleDisconnect() {
+    disconnectPair();
+    // Ensure local UI is updated
+    if (videoElement.value) {
+        videoElement.value.srcObject = null;
+    }
+    // No need to manually set recievedImage to null here, 
+    // as it should be handled in the useWebSocket composable
 }
 </script>
 
@@ -81,30 +90,29 @@ function connectPeerHandler(status: boolean): void {
             Stop Capture
         </button>
 
+        <div>
+            <ClientsList
+                :clientsList="clients"
+                :myWsID="myWsId"
+                :peerRequest="peerRequest"
+                @connectPeer="handleConnectPeer"
+            />
+        </div>
+
         <div class="video-content-share-div">
             <video ref="videoElement" autoplay></video>
         </div>
-        
+
         <div class="video-content-recieve-div" v-if="recievedImage">
             <img :src="recievedImage" alt="Received Image" />
             <button
                 class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mx-3"
-                @click="disconnectPair"
+                @click="handleDisconnect"
             >
                 Disconnect
             </button>
-
         </div>
-    
     </div>
-
-    <ClientsList
-        :clientsList="clients"
-        :myWsID="myWsId"
-        :peerRequest="peerRequest"
-        @connectPeer="handleConnectPeer"
-    />
-    <div></div>
 </template>
 
 <style scoped>

@@ -11,6 +11,7 @@ export function useWebSocket() {
   const peerRequest = ref<PairRequest | null>(null);
   const myPair = ref<string | null>(null);
   const captureInProgress = ref(false);
+  const recievedImage = ref<string | null>(null);
 
   function startWebSocket() {
     if (socket.value) {
@@ -68,6 +69,10 @@ export function useWebSocket() {
       
       case EventType.PEER_PAIRED:
         handlePeerPairedEvent(event)
+        break;
+        
+      case EventType.STREAM_IMAGE_PEER:
+        handleStreamImageRecv(event);
         break;
 
       case EventType.PEER_REQUEST_SEND: { // peerRequest.value
@@ -212,6 +217,10 @@ export function useWebSocket() {
     }
   }
 
+  function handleStreamImageRecv(event: Event){
+    recievedImage.value = event.payload;
+  }
+  
   return {
     startWebSocket,
     startCapture,
@@ -222,5 +231,6 @@ export function useWebSocket() {
     sendPeerRequest,
     peerRequest,
     respondePeerRequest,
+    recievedImage,
   };
 }

@@ -1,43 +1,3 @@
-<template>
-    <AlertComponent
-        :pairRequest="peerRequest"
-        @connectPeer="connectPeerHandler"
-    />
-    <div>
-        <button
-            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mx-3"
-            @click="startWebSocket"
-        >
-            Start WebSocket
-        </button>
-
-        <button
-            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mx-3"
-            @click="startCaptureHandler"
-            :disabled="captureInProgress"
-        >
-            Start Capture
-        </button>
-
-        <button
-            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mx-3"
-            @click="stopCaptureHandler"
-            :disabled="!captureInProgress"
-        >
-            Stop Capture
-        </button>
-
-        <video ref="videoElement" autoplay></video>
-    </div>
-
-    <ClientsList
-        :clientsList="clients"
-        :myWsID="myWsId"
-        :peerRequest="peerRequest"
-        @connectPeer="handleConnectPeer"
-    />
-    <div></div>
-</template>
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
@@ -55,7 +15,8 @@ const {
     sendPeerRequest,
     peerRequest,
     respondePeerRequest,
-    captureInProgress
+    captureInProgress,
+    recievedImage
 } = useWebSocket();
 const videoElement = ref<HTMLVideoElement | null>(null);
 
@@ -89,3 +50,62 @@ function connectPeerHandler(status: boolean): void {
     peerRequest.value = null;
 }
 </script>
+
+<template>
+    <AlertComponent
+        :pairRequest="peerRequest"
+        @connectPeer="connectPeerHandler"
+    />
+    <div>
+        <button
+            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mx-3"
+            @click="startWebSocket"
+        >
+            Start WebSocket
+        </button>
+
+        <button
+            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mx-3"
+            @click="startCaptureHandler"
+            :disabled="captureInProgress"
+        >
+            Start Capture
+        </button>
+
+        <button
+            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mx-3"
+            @click="stopCaptureHandler"
+            :disabled="!captureInProgress"
+        >
+            Stop Capture
+        </button>
+
+        <div class="video-content-share-div">
+            <video ref="videoElement" autoplay></video>
+        </div>
+        
+        <div class="video-content-recieve-div" v-if="recievedImage">
+            <img :src="recievedImage" alt="Received Image" />
+        </div>
+    
+    </div>
+
+    <ClientsList
+        :clientsList="clients"
+        :myWsID="myWsId"
+        :peerRequest="peerRequest"
+        @connectPeer="handleConnectPeer"
+    />
+    <div></div>
+</template>
+
+<style scoped>
+.video-content-share-div {
+    width: 200px;
+    height: 100px;
+}
+.video-content-recieve-div {
+    width: 400px;
+    height: 200px;
+}
+</style>

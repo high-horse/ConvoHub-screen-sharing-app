@@ -51,8 +51,8 @@ Ensure user.name and user.email are up to date:
 
 bash
 
-    git config --global user.name "New Username"
-    git config --global user.email "your-email@example.com"
+    git config --global user.name "high-horse"
+    git config --global user.email "akhileshadhikaria1@gmail.com"
 
 3. Clear Git Credential Cache
 

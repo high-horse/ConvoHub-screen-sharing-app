@@ -218,3 +218,7 @@ func broadcastHandler() {
 		clientsLock.RUnlock()
 	}
 }
+
+/*
+this is test comment.
+*/

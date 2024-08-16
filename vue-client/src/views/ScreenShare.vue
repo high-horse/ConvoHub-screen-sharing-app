@@ -17,7 +17,7 @@ const {
     captureInProgress,
     recievedImage,
     disconnectPair,
-    isCapturing,
+    // isCapturing,
 } = useWebSocket();
 const videoElement = ref<HTMLVideoElement | null>(null);
 
@@ -29,9 +29,9 @@ function startCaptureHandler() {
     }
 }
 
-function stopCaptureHandler() {
-    stopCapture();
-}
+// function stopCaptureHandler() {
+//     stopCapture();
+// }
 
 onMounted(() => {
     if (videoElement.value) {
@@ -84,7 +84,7 @@ function handleDisconnect() {
 
         <button
             class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mx-3"
-            @click="stopCaptureHandler"
+            @click="stopCapture"
             :disabled="!captureInProgress"
         >
             Stop Capture

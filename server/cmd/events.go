@@ -135,16 +135,22 @@ func HandleStreamImagePeerEvent(client *Client, payload string) {
 	}
 }
 
-
 func HandlePeerDisconnectEvent(client *Client, event Event) {
 	peerId := event.Payload
 	unpairClient(client.ID)
-	
+	fmt.Printf("from : %s \t to : %s \n", client.ID, peerId)
+
 	if peerClient, exists := clients[peerId]; exists {
+		go func() {
+			client.Send <- Event{
+				Type:    EventDisconnectStreamPair,
+				Payload: fmt.Sprintf("peer %s disconnected \n", peerId),
+			}
+		}()
 		peerClient.Send <- Event{
-			Type: EventDisconnectStreamPair,
+			Type:    EventDisconnectStreamPair,
 			Payload: fmt.Sprintf("peer %s disconnected \n", client.ID),
 		}
 	}
-	
+
 }

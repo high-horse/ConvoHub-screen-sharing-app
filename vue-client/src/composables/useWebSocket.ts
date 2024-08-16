@@ -3,16 +3,16 @@ import { EventType, Event, PairRequest } from "../types.ts";
 
 export function useWebSocket() {
   const socket = ref<WebSocket | null>(null); // Store socket ref
-  const mediaStream = ref<MediaStream | null>(null);  // Store mediashare ref
-  const captureInterval = ref<number | null>(null);   // store capture intervel
+  const mediaStream = ref<MediaStream | null>(null); // Store mediashare ref
+  const captureInterval = ref<number | null>(null); // store capture intervel
   const sharedVideo = ref<HTMLVideoElement | null>(null); // store sharedVideo
   const clients = ref<string[]>([]); // To store the list of client IDs
-  const myWsId = ref<string | null>(null);  // store my Ws Id
-  const peerRequest = ref<PairRequest | null>(null);  
+  const myWsId = ref<string | null>(null); // store my Ws Id
+  const peerRequest = ref<PairRequest | null>(null);
   const myPair = ref<string | null>(null);
   const captureInProgress = ref<boolean>(false);
   const recievedImage = ref<string | null>(null);
-  
+
   const isCapturing = ref<boolean>(false);
 
   function startWebSocket() {
@@ -68,27 +68,27 @@ export function useWebSocket() {
         console.log("Recieved PING from server");
         sendEvent(EventType.PONG, "");
         break;
-      
+
       case EventType.PEER_PAIRED:
-        handlePeerPairedEvent(event)
+        handlePeerPairedEvent(event);
         break;
-        
+
       case EventType.STREAM_IMAGE_PEER:
         handleStreamImageRecv(event);
         break;
-      
 
       case EventType.PEER_REQUEST_SEND: {
-        handlePeerRequestSend(event)
+        handlePeerRequestSend(event);
         break;
       }
 
       case EventType.PEER_REQUEST_RESPONSE: {
-        handlePeerRequestRespond(event)
+        handlePeerRequestRespond(event);
         break;
       }
-      
+
       case EventType.DISCONNECT_PAIR_SHARING:
+        console.log("DISCONNECT_PAIR_SHARING event recieved...");
         handlePeerDisconnected(event);
         break;
 
@@ -133,7 +133,7 @@ export function useWebSocket() {
   }
 
   function captureAndSendImage() {
-     if (!sharedVideo.value || !isCapturing.value) return;
+    if (!sharedVideo.value || !isCapturing.value) return;
     // if (!sharedVideo.value) return;
 
     const canvas = document.createElement("canvas");
@@ -169,7 +169,7 @@ export function useWebSocket() {
       socket.value.send(message);
     }
   }
-  
+
   // Envoked from the view.
   function sendPeerRequest(peerId: string) {
     const payload = {
@@ -180,7 +180,7 @@ export function useWebSocket() {
       sendEvent(EventType.PEER_REQUEST_SEND, JSON.stringify(payload));
     }
   }
-  
+
   // Envoked from the switch.
   function handlePeerRequestSend(event: Event): void {
     let temp: PairRequest = JSON.parse(event.payload);
@@ -190,7 +190,7 @@ export function useWebSocket() {
       console.log("Unrecognized PEER_REQUEST_SEND:", temp.message);
     }
   }
-  
+
   function respondPeerRequest(status: boolean, peerId: string): void {
     const payload = {
       peerId: peerId,
@@ -200,28 +200,26 @@ export function useWebSocket() {
     // console.log(payload);
     // to alert the pair request.
     peerRequest.value = null;
-    
+
     if (socket.value) {
       sendEvent(EventType.PEER_REQUEST_RESPONSE, JSON.stringify(payload));
     }
   }
-  
-  function handlePeerRequestRespond(event: Event) : void {
+
+  function handlePeerRequestRespond(event: Event): void {
     let temp: PairRequest = JSON.parse(event.payload);
     if (temp.message.split(":")[0] === "RESPONSE") {
-      if (
-        temp.message.split(":")[1] == "true"
-      ) {
-        console.log("Peer accepted the request. ")
+      if (temp.message.split(":")[1] == "true") {
+        console.log("Peer accepted the request. ");
       }
     } else {
       console.log("Unrecognized PEER_REQUEST_RESPONSE:", temp.message);
     }
   }
-  
+
   function handlePeerPairedEvent(event: Event) {
     myPair.value = event.payload;
-    
+
     // start sharing screen event.
     if (sharedVideo.value) {
       captureInProgress.value = true;
@@ -229,24 +227,22 @@ export function useWebSocket() {
     }
   }
 
-  function handleStreamImageRecv(event: Event){
+  function handleStreamImageRecv(event: Event) {
     recievedImage.value = event.payload;
   }
-  
+
   function disconnectPair() {
     if (socket.value) {
-      const pair_id = myPair.value
-      const payload = {
-        myPair : pair_id
-      }
-       console.log("Seding peer disconnect event:", event); // Debug log
-      sendEvent(EventType.DISCONNECT_PAIR_SHARING, JSON.stringify(payload));
+      const pair_id = myPair.value;
+
+      console.log("Seding peer disconnect event:", event); // Debug log
+      sendEvent(EventType.DISCONNECT_PAIR_SHARING, pair_id);
     }
   }
-  
+
   function handlePeerDisconnected(event: Event) {
     console.log("Handling peer disconnect event:", event); // Debug log
-    
+
     isCapturing.value = false;
     // Stop screen sharing and clean up media tracks
     if (mediaStream.value) {
@@ -255,28 +251,28 @@ export function useWebSocket() {
         console.log(`Stopping track: ${track.kind}`); // Debug log
         track.stop();
       });
-  
+
       if (sharedVideo.value) {
         console.log("Clearing video element's srcObject"); // Debug log
         sharedVideo.value.srcObject = null;
       }
     }
-  
+
     // Clear the capture interval
     if (captureInterval.value) {
       console.log("Clearing capture interval"); // Debug log
       clearInterval(captureInterval.value);
       captureInterval.value = null;
     }
-  
+
     // Reset WebSocket-related states
     console.log("Resetting states: myPair, captureInProgress, recievedImage"); // Debug log
     myPair.value = null;
     captureInProgress.value = false;
     recievedImage.value = null; // Clear the last received image
+    console.log("DISCONNECT_PAIR_SHARING function cleanup called...");
   }
 
-  
   return {
     startWebSocket,
     startCapture,
@@ -290,6 +286,6 @@ export function useWebSocket() {
     recievedImage,
     disconnectPair,
     isCapturing,
-    captureInProgress
+    captureInProgress,
   };
 }

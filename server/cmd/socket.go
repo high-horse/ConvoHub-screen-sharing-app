@@ -131,7 +131,7 @@ func (c *Client) writePump() {
 				return
 			}
 
-			log.Printf("Sent message to client %s: %+v", c.ID, event)
+			log.Printf("Sent message to client %s: %+v", c.ID, event.Type)
 
 		case <-ticker.C:
 			clientsLock.RLock()

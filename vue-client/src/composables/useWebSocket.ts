@@ -287,5 +287,6 @@ export function useWebSocket() {
     disconnectPair,
     isCapturing,
     captureInProgress,
+    myPair,
   };
 }

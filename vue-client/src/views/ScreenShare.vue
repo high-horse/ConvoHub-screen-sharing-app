@@ -17,6 +17,7 @@ const {
     captureInProgress,
     recievedImage,
     disconnectPair,
+    myPair
     // isCapturing,
 } = useWebSocket();
 const videoElement = ref<HTMLVideoElement | null>(null);
@@ -99,19 +100,29 @@ function handleDisconnect() {
             />
         </div>
 
-        <div class="video-content-share-div">
-            <video ref="videoElement" autoplay></video>
+        <div style="display: flex;">
+            <div class="video-content-recieve-div"  style="width: 85%; margin: 10px;">
+                <div v-if="recievedImage">
+                    <img :src="recievedImage" alt="Received Image" />
+                    <button
+                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mx-3"
+                        @click="handleDisconnect"
+                    >
+                        Disconnect
+                    </button>
+                </div>
+                <div v-else-if="myPair">
+                    Loading .....
+                </div>
+                
+            </div>
+            <div class="video-content-share-div"  style="width: 15%; margin: 10px;">
+                <video ref="videoElement" autoplay></video>
+            </div>
         </div>
+       
 
-        <div class="video-content-recieve-div" v-if="recievedImage">
-            <img :src="recievedImage" alt="Received Image" />
-            <button
-                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mx-3"
-                @click="handleDisconnect"
-            >
-                Disconnect
-            </button>
-        </div>
+        
     </div>
 </template>
 
